@@ -60,8 +60,11 @@ export function AddCertificationSheet({
           ]}
         />
         <DateField label="Expiry Date" name="expiryDate" />
-        {/* Document upload is wired with the capture flow in a later task. */}
-        <UploadField label="Document File" />
+        <UploadField
+          label="Document File"
+          attached={docAttached}
+          onClick={() => setDocOpen(true)}
+        />
         <TextAreaField
           label="Note (Optional)"
           name="note"
@@ -69,6 +72,13 @@ export function AddCertificationSheet({
         />
         <SubmitButton label="Submit for Review" />
       </form>
+
+      {/* Capture flow — same component as the compliance "Add Document". */}
+      <AddDocumentSheet
+        open={docOpen}
+        onClose={() => setDocOpen(false)}
+        onCapture={() => setDocAttached(true)}
+      />
     </BottomSheet>
   );
 }

@@ -269,7 +269,8 @@ render outside it (no TopBar / BottomNav).
     placeholders — in Flutter use `image_picker` / `file_picker`.
   - **Add New Certification** — opened by Certifications "Add". Form:
     name, Category toggle (Drug Test / Road Test), Result toggle
-    (Pass / Fail), Expiry Date, a "+ Upload Document" field, Note,
+    (Pass / Fail), Expiry Date, a "+ Upload Document" field (opens the
+    Add Document capture sheet — shows "Document attached" once done), Note,
     "Submit for Review".
 - **Form fields** mirror `components/ui/form.tsx`: text / select / date /
   textarea / two-option toggle / submit. Primary buttons are **blue**
@@ -399,25 +400,27 @@ render outside it (no TopBar / BottomNav).
     ring and a "Next" badge.
   - **upcoming** — grey-numbered node, muted card.
   The rail node shows the stop number; the connector is `success` for
-  completed segments. Expands to the full stop detail — equipment chips,
-  the `warning`-tinted per-stop note ("Pickup Note" / "Drop Off Note"),
-  the address (tap → opens Google Maps), appointment, pickup/drop-off
-  number, temperature, phone, email — and `StopActions`.
-- **`StopActions`** — status buttons inside the expanded stop block:
+  completed segments. Expands to the stop detail + `StopActions`:
+  **Acquire / Hook** are yard stops — only equipment chips + the action.
+  **Pick Up / Drop Off** also show the `warning`-tinted per-stop note
+  ("Pickup Note" / "Drop Off Note"), the address (tap → opens Google
+  Maps), appointment, pickup/drop-off number, temperature, phone, email.
+- **`StopActions`** — status buttons inside the expanded stop block; the
+  dialogs are **bottom sheets** (`showModalBottomSheet`):
   - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived opens an
-    odometer dialog (the value is kept); Picked Up runs confirm-trailer →
-    confirm-temperature → document upload; Departed completes directly.
+    odometer sheet (the value is kept); Picked Up runs confirm-trailer →
+    confirm-temperature → document upload (the document can be
+    **skipped**); Departed completes directly.
   - **Drop Off** → **Arrived / Delivered**. Arrived opens an odometer
-    dialog; Delivered runs a **receiver e-signature** pad → POD document
-    upload (the Add Document capture sheet).
-  - **Acquire** → odometer dialog, then **Mark as Completed**.
-  - **Hook** → a single **Mark as Completed** button.
-  Dialogs mirror as `showDialog` (`AlertDialog`); the e-signature is a
-  draw-to-sign `CustomPaint` / `signature` pad. Completed actions append
-  to an **Action History** list (label + timestamp; Arrived / Acquire
-  also keep the odometer value) shown under the buttons. **Pick Up** and
-  **Drop Off** stops also show a **Navigate** button that opens
-  directions to the stop. All actions are mocks.
+    sheet; Delivered runs a **receiver e-signature** pad → POD document
+    upload (skippable; the Add Document capture sheet).
+  - **Acquire** → **Mark as Completed** → odometer sheet.
+  - **Hook** → **Mark as Completed** → confirm-trailer sheet.
+  The e-signature is a draw-to-sign `CustomPaint` / `signature` pad.
+  Completed actions append to an **Action History** list (label +
+  timestamp; Arrived / Acquire also keep the odometer value) shown under
+  the buttons. **Pick Up** and **Drop Off** stops also show a
+  **Navigate** button that opens directions to the stop. All mocks.
 - Loads are nested under a trip, not a top-level screen.
 
 ### Bulletin — `/bulletin` → `GoRoute('/bulletin')`  · done
