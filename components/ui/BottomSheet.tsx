@@ -38,7 +38,7 @@ export function BottomSheet({
   return (
     <div className="fixed inset-y-0 left-1/2 z-50 w-full max-w-shell -translate-x-1/2">
       <div
-        className="absolute inset-0 bg-ink/50"
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
         aria-hidden="true"
       />

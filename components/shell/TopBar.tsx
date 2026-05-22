@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { APP_NAME, NAV_ITEMS, DETAIL_TITLES } from "@/lib/constants";
 import { Icon } from "@/components/ui/Icon";
 import { AccountDrawer } from "@/components/account/AccountDrawer";
+import { ThemeToggle } from "./ThemeToggle";
 
 /**
  * TopBar — two modes, both derived from the route:
@@ -43,6 +44,7 @@ export function TopBar() {
               <Icon name="bell" className="h-5 w-5" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger ring-2 ring-surface" />
             </Link>
+            <ThemeToggle />
             <button
               type="button"
               onClick={() => setAccountOpen(true)}

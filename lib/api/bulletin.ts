@@ -10,6 +10,11 @@ export async function getLoadTenders(): Promise<LoadTender[]> {
   return loadTenders;
 }
 
+/** Number of unread load tenders — for the nav badge. */
+export async function getUnreadTenderCount(): Promise<number> {
+  return loadTenders.filter((tender) => tender.unread).length;
+}
+
 /** Load tenders as upcoming calendar events, sorted by haul date. */
 export async function getUpcomingEvents(): Promise<LoadTender[]> {
   return [...loadTenders].sort((a, b) => a.date.localeCompare(b.date));

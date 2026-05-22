@@ -10,7 +10,7 @@ export default function SignInPage() {
     <div className="flex flex-1 flex-col justify-center py-10">
       {/* Brand */}
       <header className="flex flex-col items-center text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-ink">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand">
           <Icon name="truck" className="h-7 w-7 text-white" />
         </div>
         <h1 className="mt-3 text-xl font-bold text-ink">{APP_NAME}</h1>

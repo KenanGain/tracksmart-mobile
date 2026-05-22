@@ -68,10 +68,10 @@ export function SignInForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-surface shadow-card"
+      className="overflow-hidden rounded-2xl border border-ink/10 bg-surface shadow-card"
     >
       {/* Header */}
-      <div className="border-b border-slate-100 px-5 py-4">
+      <div className="border-b border-ink/5 px-5 py-4">
         <h2 className="text-base font-semibold text-ink">
           Sign in to your account
         </h2>
@@ -96,7 +96,7 @@ export function SignInForm() {
               value={demoId}
               onChange={(e) => handleDemoSelect(e.target.value)}
               disabled={loading}
-              className="h-11 w-full appearance-none rounded-lg border border-slate-200 bg-surface px-3 pr-9 text-sm text-ink disabled:opacity-60"
+              className="h-11 w-full appearance-none rounded-lg border border-ink/10 bg-surface px-3 pr-9 text-sm text-ink disabled:opacity-60"
             >
               <option value="">Select a user…</option>
               {demoUsers.map((u) => (
@@ -114,9 +114,9 @@ export function SignInForm() {
 
         {/* OR divider */}
         <div className="flex items-center gap-3">
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-ink/10" />
           <span className="text-xs font-medium text-ink-muted">OR</span>
-          <span className="h-px flex-1 bg-slate-200" />
+          <span className="h-px flex-1 bg-ink/10" />
         </div>
 
         {/* Email */}
@@ -139,7 +139,7 @@ export function SignInForm() {
               onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="you@example.com"
               disabled={loading}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-surface pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted/70 disabled:opacity-60"
+              className="h-11 w-full rounded-lg border border-ink/10 bg-surface pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted/70 disabled:opacity-60"
             />
           </div>
         </div>
@@ -163,7 +163,7 @@ export function SignInForm() {
               onChange={(e) => handlePasswordChange(e.target.value)}
               placeholder="••••••••"
               disabled={loading}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-surface pl-9 pr-10 text-sm text-ink placeholder:text-ink-muted/70 disabled:opacity-60"
+              className="h-11 w-full rounded-lg border border-ink/10 bg-surface pl-9 pr-10 text-sm text-ink placeholder:text-ink-muted/70 disabled:opacity-60"
             />
             <button
               type="button"
@@ -193,7 +193,7 @@ export function SignInForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink text-sm font-semibold text-white transition-opacity disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-brand text-sm font-semibold text-white transition-opacity disabled:opacity-60"
         >
           <Icon name="log-in" className="h-4 w-4" />
           {loading ? "Signing in…" : "Sign In"}

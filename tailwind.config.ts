@@ -14,23 +14,26 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Tokens are CSS variables (RGB channels) defined in globals.css —
+      // `:root` for light, `.dark` for dark mode. The `<alpha-value>`
+      // placeholder lets opacity utilities (bg-brand/10, …) keep working.
       colors: {
         // Brand
         brand: {
-          DEFAULT: "#1d4ed8", // primary actions, active nav
-          dark: "#1e3a8a",
-          light: "#dbeafe",
+          DEFAULT: "rgb(var(--brand) / <alpha-value>)",
+          dark: "rgb(var(--brand-dark) / <alpha-value>)",
+          light: "rgb(var(--brand-light) / <alpha-value>)",
         },
         // Semantic
-        success: "#15803d",
-        warning: "#b45309",
-        danger: "#b91c1c",
+        success: "rgb(var(--success) / <alpha-value>)",
+        warning: "rgb(var(--warning) / <alpha-value>)",
+        danger: "rgb(var(--danger) / <alpha-value>)",
         // Surfaces
-        surface: "#ffffff",
-        "surface-muted": "#f4f5f7",
-        backdrop: "#cbd5e1", // desktop canvas behind the phone frame
-        ink: "#0f172a", // primary text
-        "ink-muted": "#64748b", // secondary text
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        "surface-muted": "rgb(var(--surface-muted) / <alpha-value>)",
+        backdrop: "rgb(var(--backdrop) / <alpha-value>)",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        "ink-muted": "rgb(var(--ink-muted) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

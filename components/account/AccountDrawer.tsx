@@ -53,7 +53,7 @@ export function AccountDrawer({
   return (
     <div className="fixed inset-y-0 left-1/2 z-50 w-full max-w-shell -translate-x-1/2">
       <div
-        className="absolute inset-0 bg-ink/50"
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -132,7 +132,7 @@ export function AccountDrawer({
 
       {/* Log-out confirmation */}
       {confirmLogout && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-ink/50 px-8">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 px-8">
           <div className="w-full rounded-2xl bg-surface p-5">
             <h3 className="text-base font-bold text-ink">Log out?</h3>
             <p className="mt-1 text-sm text-ink-muted">

@@ -11,6 +11,11 @@ export async function getConversations(): Promise<Conversation[]> {
   return conversations;
 }
 
+/** Number of conversations with unread messages — for the nav badge. */
+export async function getUnreadChatCount(): Promise<number> {
+  return conversations.filter((conversation) => conversation.unread).length;
+}
+
 /**
  * One conversation by id. When there is no existing thread but the id
  * matches a contact, a fresh empty conversation is returned — this is how
