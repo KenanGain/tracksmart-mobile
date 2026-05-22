@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    /* `backdrop` is the canvas behind the phone frame — only visible on
+       screens wider than the shell (desktop preview). On a real phone the
+       frame fills the viewport and this colour never shows. */
+    @apply bg-backdrop text-ink antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  /* The app is touch-first: remove the tap highlight, keep focus visible. */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  /* Phone-width shell. On desktop it is centered like a device preview.
+     The shell background is muted grey so white cards/bars stand out.
+     Fixed to the viewport height so the TopBar and BottomNav stay put
+     while only the <main> content scrolls. */
+  .app-shell {
+    @apply relative mx-auto flex h-dvh w-full max-w-shell flex-col bg-surface-muted shadow-lg;
+  }
+}

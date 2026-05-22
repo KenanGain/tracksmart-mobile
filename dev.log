@@ -1,0 +1,41 @@
+
+> tripplanner-mobile@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 43872, using available port 3002 instead.
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3002
+   - Network:      http://169.254.83.107:3002
+
+ ✓ Starting...
+ ✓ Ready in 2.2s
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 3.2s (622 modules)
+ GET /dashboard 200 in 3658ms
+ ✓ Compiled /auth/sign-in in 413ms (636 modules)
+ GET /auth/sign-in 200 in 686ms
+ GET /dashboard 200 in 100ms
+ ✓ Compiled /trips in 263ms (624 modules)
+ GET /trips 200 in 454ms
+ ✓ Compiled /loads in 225ms (626 modules)
+ GET /loads 200 in 417ms
+ ✓ Compiled /account in 215ms (628 modules)
+ GET /account 200 in 446ms
+ GET /auth/sign-in 200 in 70ms
+ GET /auth/sign-in 200 in 72ms
+ GET /auth/sign-in 200 in 68ms
+ GET /dashboard 200 in 74ms
+ ○ Compiling / ...
+ ✓ Compiled / in 533ms (620 modules)
+ GET / 307 in 1092ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\kenan\Mobile app\.next\server\app\auth\sign-in\page.js'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\kenan\\Mobile app\\.next\\server\\app\\auth\\sign-in\\page.js',
+  page: '/auth/sign-in'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.3s (967 modules)
+ GET /auth/sign-in 500 in 3300ms
+[?25h

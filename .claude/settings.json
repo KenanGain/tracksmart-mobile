@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm view *)",
+      "Bash(npm run *)",
+      "Bash(git mv *)",
+      "Bash(mkdir -p \"app/\\(app\\)/trips\" \"app/\\(app\\)/loads\" \"app/\\(app\\)/account\")",
+      "Bash(rmdir app/trips app/loads app/account)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(rm -rf .next)",
+      "Bash(echo \"dev server starting \\(pid $!\\)\")",
+      "Bash(git rm *)",
+      "Bash(rm -f \"app/\\(app\\)/account/page.tsx\")"
+    ]
+  }
+}
