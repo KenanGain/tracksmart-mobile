@@ -75,12 +75,15 @@ tags: [screens, routes]
 - Active-trip card, quick stats, role-aware shortcuts. *(planned)*
 
 ### Trips `/trips`  ✅ done
-- Three collapsible sections: **Current Trip**, **Upcoming Trips**,
-  **Previous Trips** (each with a count badge).
+- A **Current / Upcoming / Previous** tab bar; the selected tab lists its
+  trips (empty state when none).
 - Every trip is a **`TripCard`** — id + a status pill (In Progress /
   countdown / Completed), the route (origin → destination), the
   date/time window, a meta row (stop count, power unit, equipment +
-  trailer), a **route map** (`TripMap`) and a "View trip" footer.
+  trailer) and a "View trip" footer.
+- Only the **current** trip's card shows the **route map** (`TripMap`);
+  upcoming / previous cards are map-free — their map is on the trip
+  detail page.
 - **`TripMap`** — a real map: **Leaflet + OpenStreetMap** tiles (no API
   key), a brand route polyline through the stop coordinates and numbered
   red pins. Loaded client-only via `next/dynamic` (`ssr: false`). The

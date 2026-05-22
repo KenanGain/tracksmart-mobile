@@ -97,8 +97,10 @@ export function TripSummary({
 
 /**
  * TripCard — a trip summary card. The text summary and the footer link to
- * the trip detail page (`/trips/[id]`); the map opens the full-screen
- * map, so it is deliberately not wrapped in the detail link.
+ * the trip detail page (`/trips/[id]`). Only the **current** trip's card
+ * shows the route map; upcoming / previous cards are map-free (the map is
+ * on the trip detail page). The map is not wrapped in the detail link —
+ * tapping it opens the full-screen map.
  */
 export function TripCard({
   trip,
@@ -112,9 +114,11 @@ export function TripCard({
       <Link href={`/trips/${trip.id}`} className="block p-4">
         <TripSummary trip={trip} variant={variant} />
       </Link>
-      <div className="px-4 pb-4">
-        <TripMap stops={trip.stops} />
-      </div>
+      {variant === "current" && (
+        <div className="px-4 pb-4">
+          <TripMap stops={trip.stops} />
+        </div>
+      )}
       <Link
         href={`/trips/${trip.id}`}
         className="flex items-center justify-center gap-1 border-t border-ink/5 py-2.5 text-xs font-semibold text-brand"

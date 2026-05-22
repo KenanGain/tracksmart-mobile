@@ -5,69 +5,63 @@ import { Icon } from "@/components/ui/Icon";
 import { TripCard } from "./TripCard";
 import type { TripsData } from "@/lib/api/trips";
 
-/** Collapsible section with a blue-accented title + count badge. */
-function Section({
-  title,
-  count,
-  defaultOpen,
-  children,
-}: {
-  title: string;
-  count?: number;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen ?? false);
-  return (
-    <section>
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-2"
-      >
-        <span className="h-6 w-1 shrink-0 rounded-full bg-brand" />
-        <h2 className="flex-1 text-left text-xl font-bold text-ink">
-          {title}
-        </h2>
-        {count !== undefined && count > 0 && (
-          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-semibold text-ink-muted">
-            {count}
-          </span>
-        )}
-        <Icon
-          name={open ? "chevron-up" : "chevron-down"}
-          className="h-5 w-5 text-ink-muted"
-        />
-      </button>
-      {open && <div className="mt-3">{children}</div>}
-    </section>
-  );
-}
+type Tab = "current" | "upcoming" | "previous";
+
+const TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: "current", label: "Current", icon: "truck" },
+  { key: "upcoming", label: "Upcoming", icon: "calendar" },
+  { key: "previous", label: "Previous", icon: "clock" },
+];
 
 function EmptyNote({ text }: { text: string }) {
   return (
-    <p className="py-2 text-center text-sm italic text-ink-muted">{text}</p>
+    <p className="py-8 text-center text-sm italic text-ink-muted">{text}</p>
   );
 }
 
 /**
- * TripsView — the Trips screen: three collapsible sections (Current /
- * Upcoming / Previous). Every trip is a summary card; tapping one opens
- * its detail page at `/trips/[id]`.
+ * TripsView — the Trips screen: a Current / Upcoming / Previous tab bar.
+ * Every trip is a summary card; tapping one opens its detail page at
+ * `/trips/[id]`. Only the current trip's card shows the route map.
  */
 export function TripsView({ trips }: { trips: TripsData }) {
+  const [tab, setTab] = useState<Tab>("current");
+
   return (
-    <div className="space-y-5">
-      <Section title="Current Trip" defaultOpen>
-        {trips.current ? (
+    <div className="space-y-4">
+      {/* Tab bar — rounded pill bubbles */}
+      <div className="flex gap-1 rounded-full bg-surface-muted p-1 shadow-inner">
+        {TABS.map((option) => {
+          const active = tab === option.key;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              onClick={() => setTab(option.key)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[13px] font-semibold transition-colors ${
+                active
+                  ? "bg-brand text-white shadow-nav"
+                  : "text-ink-muted"
+              }`}
+            >
+              <Icon name={option.icon} className="h-4 w-4" />
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Current */}
+      {tab === "current" &&
+        (trips.current ? (
           <TripCard trip={trips.current} variant="current" />
         ) : (
           <EmptyNote text="No current trip" />
-        )}
-      </Section>
+        ))}
 
-      <Section title="Upcoming Trips" count={trips.upcoming.length} defaultOpen>
-        {trips.upcoming.length === 0 ? (
+      {/* Upcoming */}
+      {tab === "upcoming" &&
+        (trips.upcoming.length === 0 ? (
           <EmptyNote text="No upcoming trips" />
         ) : (
           <div className="space-y-3">
@@ -75,11 +69,11 @@ export function TripsView({ trips }: { trips: TripsData }) {
               <TripCard key={trip.id} trip={trip} variant="upcoming" />
             ))}
           </div>
-        )}
-      </Section>
+        ))}
 
-      <Section title="Previous Trips" count={trips.previous.length}>
-        {trips.previous.length === 0 ? (
+      {/* Previous */}
+      {tab === "previous" &&
+        (trips.previous.length === 0 ? (
           <EmptyNote text="No previous trips" />
         ) : (
           <div className="space-y-3">
@@ -87,8 +81,7 @@ export function TripsView({ trips }: { trips: TripsData }) {
               <TripCard key={trip.id} trip={trip} variant="previous" />
             ))}
           </div>
-        )}
-      </Section>
+        ))}
     </div>
   );
 }

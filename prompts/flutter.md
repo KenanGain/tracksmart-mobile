@@ -353,15 +353,16 @@ render outside it (no TopBar / BottomNav).
   as `lib/data/trips.ts` (rich: origin/destination, date window,
   countdown, equipment, power unit, trailer, note; stops carry name,
   address, lat/lng, appointment, pickup number, temperature, phone, note).
-- **Flutter widget:** `trips_screen.dart` — three collapsible sections
-  (Current / Upcoming / Previous), each an `ExpansionTile`-style block
-  with a blue-accent title and a count badge. Each section lists
-  **`TripCard`**s; there is no inline expansion.
+- **Flutter widget:** `trips_screen.dart` — a **Current / Upcoming /
+  Previous** tab bar (`TabBar` / segmented control); the selected tab
+  lists its **`TripCard`**s (empty state when none).
 - **`TripCard`** — a tappable summary card (`InkWell` → `context.push`
   `/trips/<id>`): trip id + a status pill (In Progress = `brand` /
   countdown = `warning` / Completed = `success`), the route
   (origin → destination), the date window, a meta row (stop count, power
-  unit, equipment + trailer), a **`TripMap`** and a "View trip" footer.
+  unit, equipment + trailer) and a "View trip" footer. Only the
+  **current** trip's card embeds a **`TripMap`**; upcoming / previous
+  cards are map-free (their map is on the trip detail page).
 - **`TripMap`** — a **real interactive map**. The Next.js build uses
   **Leaflet + OpenStreetMap** tiles (`react-leaflet`, loaded client-only
   via `next/dynamic` `ssr:false`), a `brand` route polyline through the
