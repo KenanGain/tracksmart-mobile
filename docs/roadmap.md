@@ -15,7 +15,7 @@ tags: [roadmap, milestones]
 - [x] Next.js + TypeScript + Tailwind project config
 - [x] Mobile shell: `AppShell`, `TopBar`, `BottomNav` (translucent,
       floating)
-- [x] Five-tab bottom nav (Home / Trips / Bulletin / Calendar / Chats)
+- [x] Five-tab bottom nav (Home / Trips / Bulletin / Schedule / Chats)
 - [x] Design tokens in `tailwind.config.ts`
 - [x] Documentation ([[design]], [[architecture]], [[screens]],
       [[design-system]], [[data-model]])
@@ -31,9 +31,7 @@ tags: [roadmap, milestones]
 
 ### M2 — Driver core screens
 - [x] Home `/home` — company & compliance cards, action cards, payroll,
-      schedule, time-tracking clock in/out
-- [x] Trips `/trips` — current / upcoming / previous, itinerary card,
-      progress strip, stop timeline with document upload + completion
+      time-tracking clock in/out
 - [x] Compliance `/compliance` — documents, uploads, certifications
 - [x] Expenses `/expenses` + `/expenses/new` (5-step wizard)
 - [x] Trip Sheets `/trip-sheets` + `/trip-sheets/new`
@@ -42,8 +40,8 @@ tags: [roadmap, milestones]
 - [x] Bulletin `/bulletin` — load-tender feed (accept / decline)
 - [x] Chats `/chats` + `/chat/[id]` — conversation list, threads, and a
       New-Chat contact picker
-- [x] Calendar `/calendar` — month grid with navigation, events / shifts
-      / timesheet, event scheduling, list view
+- [x] Schedule `/calendar` — month grid (events / shifts / timesheet) +
+      a date-grouped agenda list
 - [x] Notifications `/notifications` — top-bar bell feed
 
 ### M4 — Account
@@ -52,21 +50,30 @@ tags: [roadmap, milestones]
 - [x] Trip History `/account/trip-history`
 - [x] About `/account/about`
 
+### M5 — Trips & maps
+- [x] Trips `/trips` — current / upcoming / previous summary cards
+- [x] Trip detail `/trips/[id]` — map, progress, dispatch note, details
+      and the stop timeline
+- [x] Rich stop kinds (Acquire / Hook / Docking / Loading / Unloading /
+      Pick Up / Deliver / Drop Off / Check Call) with odometer reading +
+      document upload on freight stops
+- [x] Interactive route map (`TripMap`) — Leaflet + OpenStreetMap, with a
+      tap-to-open full-screen map
+
 ## ⏳ Remaining
 
-### M5 — Trip & load detail
-- [ ] Trip detail `/trips/[id]` with attached loads
-- [ ] Route / map view `/trips/[id]/route` (map provider integration)
-- [ ] Load detail `/trips/[id]/loads/[loadId]` + proof-of-delivery
+### M6 — Detail screens
+- [ ] Load detail `/trips/[id]/loads/[loadId]` + document upload
+- [ ] Dedicated full-screen route / navigation view `/trips/[id]/route`
 - [ ] Bulletin notice detail `/bulletin/[id]`
 - [ ] Maintenance Requests flow (currently a Home placeholder)
 
-### M6 — Roles
+### M7 — Roles
 - [ ] Role-aware UI for **business** and **carrier** (current build is
       driver-focused)
 - [ ] Vehicle / fleet screens
 
-### M7 — Polish & real API
+### M8 — Polish & real API
 - [ ] Connect `lib/api` to the real TrackSmart API (drop mock data)
 - [ ] Offline read cache + write queue
 - [ ] Loading / empty / error states audited on every screen

@@ -71,12 +71,13 @@ the carrier "Transplus Systems Corp.".
 
 App Shell (TopBar + content + BottomNav)
 ├── /home        Home        — today's overview & action cards
-├── /trips       Trips       — current / upcoming / previous + stop timeline
+├── /trips       Trips       — current / upcoming / previous summary cards
 ├── /bulletin    Bulletin    — load tenders (accept / decline)
 ├── /calendar    Schedule    — month grid (events / shifts / timesheet) + agenda
 └── /chats       Chats       — messaging: drivers, carriers, dispatch
 
 Detail routes inside the shell (back-button TopBar):
+  /trips/[id]              — trip detail: map, progress, stop timeline
   /compliance              — licence, passport, documents, certifications
   /account/settings        — notifications + appearance
   /account/trip-history    — completed trips
@@ -128,11 +129,15 @@ See [[docs/screens]] for the per-screen specs. Built so far:
 
 - **Sign in** — demo-user quick login + manual mock auth.
 - **Home** — company & compliance cards, action cards (Expenses /
-  Maintenance / Trip Sheets), Payroll, Schedule, a Time-Tracking clock
-  in/out card, and Refresh / Help / Logout.
-- **Trips** — current / upcoming / previous; itinerary card, a progress
-  strip, and a stop timeline (Acquire / Hook / Pickup / Deliver / Check
-  Call) — pickup/deliver stops upload documents, all stops complete.
+  Maintenance / Trip Sheets), Payroll, a Time-Tracking clock in/out card,
+  and Refresh / Help / Logout.
+- **Trips** — current / upcoming / previous summary cards, each with an
+  interactive route map; tapping a card opens the **trip detail**
+  (`/trips/[id]`) — map, progress strip, dispatch note, details and the
+  stop timeline (Acquire / Hook / Loading / Docking / Unloading / Pick Up
+  / Deliver / Drop Off / Check Call). Freight stops capture an odometer
+  reading and a document. The map is Leaflet + OpenStreetMap and opens
+  full-screen on tap.
 - **Bulletin** — a load-tender feed with accept / decline.
 - **Schedule** — a month grid (prev/next nav, working / event / clocked
   dots) with per-day events / shifts / timesheet, plus a date-grouped
@@ -148,11 +153,13 @@ See [[docs/screens]] for the per-screen specs. Built so far:
 
 - **Next.js App Router**, TypeScript (strict), Tailwind CSS.
 - Server Components by default; `"use client"` only for interactivity
-  (navigation, forms, stateful widgets).
+  (navigation, forms, stateful widgets, the map).
 - Data layer is split in two: `lib/data/*` is the **mock backend**;
   `lib/api/*` is the **service layer** screens call. Screens never touch
   `lib/data` directly and never call `fetch` — this keeps the Flutter
   mirror honest.
+- Maps use **Leaflet + OpenStreetMap** (`react-leaflet`) — no API key;
+  the map widget is loaded client-only via `next/dynamic`.
 
 Details and the data flow diagram: [[docs/architecture]].
 

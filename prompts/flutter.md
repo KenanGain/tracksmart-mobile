@@ -349,11 +349,10 @@ render outside it (no TopBar / BottomNav).
 - **Next.js:** `app/(app)/trips/page.tsx` → `TripsView`.
 - **Service:** `getTrips()` (`lib/api/trips.ts`, mock `lib/data/trips.ts`).
 - **Models (Dart):** `Trip` and `TripStop` (`lib/models/trip.dart`) with a
-  `TripStopKind` enum (acquire / hook / docking / loading / unloading /
-  pickup / deliver / drop-off / check-call) — same fields as
-  `lib/data/trips.ts` (rich: origin/destination, date window, countdown,
-  equipment, power unit, trailer, note; stops carry name, address,
-  appointment, pickup number, temperature, phone, note).
+  `TripStopKind` enum (acquire / hook / pickup / drop-off) — same fields
+  as `lib/data/trips.ts` (rich: origin/destination, date window,
+  countdown, equipment, power unit, trailer, note; stops carry name,
+  address, lat/lng, appointment, pickup number, temperature, phone, note).
 - **Flutter widget:** `trips_screen.dart` — three collapsible sections
   (Current / Upcoming / Previous), each an `ExpansionTile`-style block
   with a blue-accent title and a count badge. Each section lists
@@ -381,10 +380,11 @@ render outside it (no TopBar / BottomNav).
 - **Flutter widget:** `trip_detail_screen.dart`, a `ConsumerWidget`. A
   detail route — AppBar back button + "Trip &lt;id&gt;".
 - **`TripDetailView`** — the summary card with the route map, a **Trip
-  Progress** strip (`LinearProgressIndicator`, `success`), a **Dispatch
-  Note** card (`warning`-tinted), a **Trip Details** card (equipment,
-  power unit, trailer, drivers, dispatcher, issued-on) and the stop
-  timeline.
+  Progress** strip (`LinearProgressIndicator`, `success`), a **Submit**
+  card (`TripSubmitCard` — opens a `showModalBottomSheet` to submit
+  documents, notes & photos), a **Dispatch Note** card (`warning`-tinted),
+  a **Trip Details** card (equipment, power unit, trailer, drivers,
+  dispatcher, issued-on) and the stop timeline.
 - **`TripStopRow`** — a timeline row with three states driven by the
   first not-yet-completed stop:
   - **done** — green check node, white card, "Done" badge.
@@ -394,11 +394,21 @@ render outside it (no TopBar / BottomNav).
   The rail node shows the stop number; the connector is `success` for
   completed segments. Expands to the full stop detail (equipment chips,
   address, appointment, pickup/drop-off number, temperature, phone,
-  email, directions, a `warning`-tinted per-stop note) and `StopActions`.
-- **`StopActions`** — **Pick Up / Deliver / Drop Off** (freight) stops
-  show an **Odometer Reading** card (numeric input + Save) and an
-  **Upload Document** card (opens the Add Document capture sheet); every
-  stop shows a single **Mark as Completed** button. All actions are mocks.
+  email, directions, a `warning`-tinted per-stop note — "Pickup Note" /
+  "Drop Off Note") and `StopActions`.
+- **`StopActions`** — status buttons inside the expanded stop block:
+  - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived opens an
+    odometer dialog; Picked Up runs confirm-trailer → confirm-temperature
+    → odometer; Departed completes directly.
+  - **Drop Off** → **Arrived / Delivered**. Arrived opens an odometer
+    dialog; Delivered runs an e-signature pad → POD document upload (the
+    Add Document capture sheet).
+  - **Acquire / Hook** → a single **Mark as Completed** button.
+  Dialogs mirror as `showDialog` (`AlertDialog`); the e-signature is a
+  draw-to-sign `CustomPaint` / `signature` pad. Completed actions append
+  to an **Action History** list (label + timestamp) shown under the
+  buttons, with a **Navigate** button that opens directions to the stop.
+  All actions are mocks.
 - Loads are nested under a trip, not a top-level screen.
 
 ### Bulletin — `/bulletin` → `GoRoute('/bulletin')`  · done
@@ -509,9 +519,9 @@ render outside it (no TopBar / BottomNav).
 - **Next.js:** `app/(app)/account/trip-history/page.tsx` — async Server
   Component awaiting `getTrips()`.
 - **Flutter widget:** `trip_history_screen.dart`, a `ConsumerWidget`.
-- **Layout:** a completed-trip count line + a `ListView` of
-  `TripItineraryCard`s (`previous` variant — `brandLight`); empty state
-  when there are none.
+- **Layout:** a completed-trip count line + a `ListView` of `TripCard`s
+  (`previous` variant); tapping one opens `/trips/[id]`. Empty state when
+  there are none.
 
 ### About — `/account/about` → `GoRoute('/account/about')`  · done
 - **Opened from:** the account drawer. Detail route.

@@ -42,15 +42,6 @@ if (!BASE) {
 }
 console.log(`  Using dev server at ${BASE}\n`);
 
-/** Screens to capture. */
-const screens = [
-  { name: "01-sign-in", path: "/auth/sign-in" },
-  { name: "02-dashboard", path: "/dashboard" },
-  { name: "03-trips", path: "/trips" },
-  { name: "04-loads", path: "/loads" },
-  { name: "05-account", path: "/account" },
-];
-
 await mkdir(OUT, { recursive: true });
 
 const browser = await chromium.launch();
@@ -62,43 +53,83 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 
-for (const screen of screens) {
-  await page.goto(`${BASE}${screen.path}`, { waitUntil: "networkidle" });
-  await page.screenshot({ path: `${OUT}/${screen.name}.png` });
-  console.log(`  ✓ ${screen.path}  →  ${OUT}/${screen.name}.png`);
+// Helper: navigate and wait for the page to settle, then screenshot.
+async function shot(name, path, { waitFor, action } = {}) {
+  await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+  if (waitFor) await page.waitForSelector(waitFor, { timeout: 5000 }).catch(() => {});
+  if (action) await action(page);
+  await page.waitForTimeout(400); // let animations settle
+  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: false });
+  console.log(`  ✓ ${path}  →  ${OUT}/${name}.png`);
 }
 
-// Extra: sign-in with a demo user picked (form autofilled).
-await page.goto(`${BASE}/auth/sign-in`, { waitUntil: "networkidle" });
-await page.selectOption("#demo-user", { index: 1 });
-await page.screenshot({ path: `${OUT}/06-sign-in-demo-selected.png` });
-console.log(`  ✓ /auth/sign-in (demo selected)  →  ${OUT}/06-sign-in-demo-selected.png`);
+// ── Auth ───────────────────────────────────────────────────────────────────
+await shot("01-sign-in", "/auth/sign-in");
 
-// Extra: editing a field manually must reset the demo-user dropdown.
+// Sign-in with demo user selected
 await page.goto(`${BASE}/auth/sign-in`, { waitUntil: "networkidle" });
-await page.selectOption("#demo-user", { index: 1 });
-await page.fill("#email", "root@");
-const pickerValue = await page.$eval("#demo-user", (el) => el.value);
-await page.screenshot({ path: `${OUT}/07-manual-edit-resets-picker.png` });
-console.log(
-  `  ✓ /auth/sign-in (manual edit) → picker reset: ${
-    pickerValue === "" ? "OK" : `FAIL (value="${pickerValue}")`
-  }`,
-);
+const demoSelect = page.locator("#demo-user");
+if (await demoSelect.count()) await demoSelect.selectOption({ index: 1 });
+await page.waitForTimeout(300);
+await page.screenshot({ path: `${OUT}/02-sign-in-demo-selected.png` });
+console.log(`  ✓ /auth/sign-in (demo selected)  →  ${OUT}/02-sign-in-demo-selected.png`);
 
-// Desktop preview — shows the centered phone frame on the backdrop.
+// ── Main app screens (sign in first so redirects work) ─────────────────────
+// Quick sign-in via demo user
+await page.goto(`${BASE}/auth/sign-in`, { waitUntil: "networkidle" });
+const sel = page.locator("#demo-user");
+if (await sel.count()) {
+  await sel.selectOption({ index: 1 });
+  await page.waitForTimeout(200);
+}
+const signInBtn = page.locator("button[type=submit], button:has-text('Sign In')").first();
+if (await signInBtn.count()) {
+  await signInBtn.click();
+  await page.waitForURL(`${BASE}/home`, { timeout: 5000 }).catch(() => {});
+}
+
+await shot("03-home", "/home");
+await shot("04-trips", "/trips");
+await shot("05-bulletin", "/bulletin");
+await shot("06-schedule", "/calendar");
+await shot("07-chats", "/chats");
+
+// Trip detail (use first trip id from mock)
+await shot("08-trip-detail", "/trips/TRIP-001");
+
+// Notifications (full-screen, no shell)
+await shot("09-notifications", "/notifications");
+
+// Expenses
+await shot("10-expenses", "/expenses");
+await shot("11-expense-new", "/expenses/new");
+
+// Trip sheets
+await shot("12-trip-sheets", "/trip-sheets");
+await shot("13-trip-sheet-new", "/trip-sheets/new");
+
+// Compliance (detail route)
+await shot("14-compliance", "/compliance");
+
+// Account sub-screens
+await shot("15-settings", "/account/settings");
+await shot("16-trip-history", "/account/trip-history");
+await shot("17-about", "/account/about");
+
+// ── Desktop framing ────────────────────────────────────────────────────────
 const desktop = await browser.newContext({
   viewport: { width: 1280, height: 900 },
 });
 const desktopPage = await desktop.newPage();
 for (const screen of [
-  { name: "08-desktop-sign-in", path: "/auth/sign-in" },
-  { name: "09-desktop-dashboard", path: "/dashboard" },
+  { name: "18-desktop-sign-in", path: "/auth/sign-in" },
+  { name: "19-desktop-home", path: "/home" },
 ]) {
   await desktopPage.goto(`${BASE}${screen.path}`, { waitUntil: "networkidle" });
+  await desktopPage.waitForTimeout(400);
   await desktopPage.screenshot({ path: `${OUT}/${screen.name}.png` });
   console.log(`  ✓ desktop ${screen.path}  →  ${OUT}/${screen.name}.png`);
 }
 
 await browser.close();
-console.log("\nDone.");
+console.log("\nDone — screenshots written to ./" + OUT + "/");

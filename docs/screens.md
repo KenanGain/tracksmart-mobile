@@ -89,21 +89,27 @@ tags: [screens, routes]
 ### Trip detail `/trips/[id]`  ✅ done
 - Detail route (TopBar back button + "Trip &lt;id&gt;").
 - **`TripDetailView`** — the full trip: the summary card with the route
-  map, a **Trip Progress** strip (done/total + bar), a **Dispatch Note**
-  card, a **Trip Details** card (equipment, power unit, trailer, drivers,
-  dispatcher, issued-on) and the stop **timeline**.
-- Stop kinds: Acquire / Hook / Docking / Loading / Unloading / Pick Up /
-  Deliver / Drop Off / Check Call. Each timeline stop has one of three
-  states — **done** (green check), the **next** pending stop (brand ring
-  + "Next" badge) or **upcoming** (muted). The rail node shows the stop
-  number; the connector is green for completed segments.
+  map, a **Trip Progress** strip (done/total + bar), a **Submit** card
+  (opens a sheet to submit documents, notes & photos), a **Dispatch
+  Note** card, a **Trip Details** card (equipment, power unit, trailer,
+  drivers, dispatcher, issued-on) and the stop **timeline**.
+- Stop kinds: **Acquire / Hook / Pick Up / Drop Off**. Each timeline stop
+  has one of three states — **done** (green check), the **next** pending
+  stop (brand ring + "Next" badge) or **upcoming** (muted). The rail node
+  shows the stop number; the connector is green for completed segments.
 - Each stop expands to its detail — equipment (unit / trailer), address,
   appointment date & time, pick-up / drop-off number, temperature,
-  phone, email, directions and a per-stop note.
-- **Pick Up**, **Deliver** and **Drop Off** stops (freight stops) get an
-  **Odometer Reading** input (truck km) and an **Upload Document** action
-  (opens the Add Document capture sheet). Every stop gets a **Mark as
-  Completed** button.
+  phone, email, directions, a per-stop note ("Pickup Note" / "Drop Off
+  Note"), and the status actions below.
+- **Status actions** (`StopActions`):
+  - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived prompts an
+    odometer reading; Picked Up runs confirm-trailer → confirm-temperature
+    → odometer; Departed completes directly.
+  - **Drop Off** → **Arrived / Delivered**. Arrived prompts an odometer
+    reading; Delivered runs an e-signature → POD document upload.
+  - **Acquire / Hook** → a single **Mark as Completed** button.
+- Completed actions are listed under **Action History** with a timestamp;
+  a **Navigate** button opens directions to the stop.
 - Data via `getTrips()` / `getTrip(id)` (`lib/api/trips.ts`, mock
   `lib/data/trips.ts`).
 

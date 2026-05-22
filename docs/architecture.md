@@ -17,6 +17,7 @@ tags: [architecture, nextjs]
 | Styling | Tailwind CSS 3 | Tokens in `tailwind.config.ts` |
 | Rendering | React Server Components | `"use client"` only when needed |
 | Data | `lib/api` service layer over a `lib/data` mock backend | Real API wired later |
+| Maps | Leaflet + OpenStreetMap (`react-leaflet`) | No API key; loaded client-only |
 
 ## Folder layout
 
@@ -30,8 +31,9 @@ app/                   Routes (App Router)
     layout.tsx         Wraps screens in AppShell
     home/page.tsx      /home        (landing after sign-in)
     trips/page.tsx     /trips
+    trips/[id]/page.tsx           /trips/[id]        (trip detail route)
     bulletin/page.tsx  /bulletin
-    calendar/page.tsx  /calendar
+    calendar/page.tsx  /calendar    (the "Schedule" tab)
     chats/page.tsx     /chats
     compliance/page.tsx           /compliance        (detail route)
     account/settings/page.tsx     /account/settings  (detail route)
@@ -59,15 +61,15 @@ components/
   account/    AccountDrawer, SettingsScreen
   auth/       SignInForm
   bulletin/   BulletinList, BulletinCard
-  calendar/   CalendarScreen, CalendarView, CalendarEventsList,
-              ScheduleEventSheet
+  calendar/   CalendarScreen, CalendarView, CalendarEventsList
   chats/      ChatsList, ChatThread, NewChatSheet
   compliance/ compliance screen + sheet forms
   expenses/   SubmitExpenseWizard + status list
   home/       Home cards (company, compliance, action, time tracking…)
   notifications/ NotificationsList
   trip-sheets/   submit form + status list
-  trips/      TripsView, TripItineraryCard, TripStopRow
+  trips/      TripsView, TripCard, TripDetailView, TripStopRow,
+              TripMap, TripMapLeaflet
   ui/         Icon, BottomSheet, StatusBadge, ScreenPlaceholder, form
 lib/
   constants.ts  App-wide constants (APP_NAME, NAV_ITEMS, DETAIL_TITLES…)
@@ -120,7 +122,8 @@ frame.
 - **Server Component by default.** Data fetching happens server-side in
   `page.tsx` files.
 - Add `"use client"` only for: navigation hooks (`usePathname`,
-  `useRouter`), forms, and stateful widgets (toggles, expanders, sheets).
+  `useRouter`), forms, stateful widgets (toggles, expanders, sheets) and
+  the Leaflet map (loaded via `next/dynamic`, `ssr: false`).
 - Keep client components small and leaf-level.
 
 ## Data layer

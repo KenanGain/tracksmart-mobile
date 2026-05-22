@@ -93,7 +93,9 @@ Default screen padding: `px-4 py-4`.
 
 ## Rules
 
-1. Never hard-code a colour — use a token.
+1. Never hard-code a colour — use a token. (The one exception is the
+   Leaflet map: route / pin colours are passed to Leaflet as literal hex
+   values that mirror the `brand` / `danger` tokens.)
 2. Touch targets ≥ 44×44px.
 3. Always respect safe areas on full-bleed bars.
 4. One primary (filled) button per screen; everything else is secondary.

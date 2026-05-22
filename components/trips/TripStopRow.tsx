@@ -2,28 +2,15 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { AddDocumentSheet } from "@/components/compliance/AddDocumentSheet";
+import { StopActions } from "./StopActions";
 import type { TripStop, TripStopKind } from "@/lib/data/trips";
 
 const KIND: Record<TripStopKind, { label: string; icon: string }> = {
   acquire: { label: "Acquire", icon: "truck" },
   hook: { label: "Hook", icon: "truck" },
-  docking: { label: "Docking", icon: "building" },
-  loading: { label: "Loading", icon: "package" },
-  unloading: { label: "Unloading", icon: "package" },
   pickup: { label: "Pick Up", icon: "package" },
-  deliver: { label: "Deliver", icon: "building" },
   "drop-off": { label: "Drop Off", icon: "building" },
-  "check-call": { label: "Check Call", icon: "phone" },
 };
-
-/** Kinds that pick up freight — used for the reference-number label. */
-const PICKUP_KINDS: TripStopKind[] = ["acquire", "hook", "pickup", "loading"];
-/**
- * Freight-handling stops — Pick Up, Deliver and Drop Off. At these the
- * driver records an odometer reading and uploads a document.
- */
-const FREIGHT_KINDS: TripStopKind[] = ["pickup", "deliver", "drop-off"];
 
 /** A labelled detail row inside the expanded stop. */
 function DetailRow({
@@ -46,113 +33,11 @@ function DetailRow({
   );
 }
 
-/** OdometerCard — records the truck odometer at a freight stop (mock). */
-function OdometerCard() {
-  const [value, setValue] = useState("");
-  const [saved, setSaved] = useState<string | null>(null);
-
-  return (
-    <div className="rounded-card bg-surface p-4 shadow-card">
-      <p className="flex items-center gap-2 text-sm font-bold text-ink">
-        <Icon name="truck" className="h-4 w-4 text-brand" />
-        Odometer Reading
-      </p>
-      {saved ? (
-        <p className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-success">
-          <Icon name="check" className="h-4 w-4" />
-          {saved} km recorded
-        </p>
-      ) : (
-        <div className="mt-3 flex gap-2">
-          <input
-            type="number"
-            inputMode="numeric"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="Enter km"
-            className="min-w-0 flex-1 rounded-lg bg-surface-muted px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-muted focus:ring-2 focus:ring-brand/30"
-          />
-          <button
-            type="button"
-            disabled={value.trim() === ""}
-            onClick={() => setSaved(value.trim())}
-            className="shrink-0 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            Save
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * StopActions — the actions for an expanded stop.
- *  - Pick Up, Deliver & Drop Off stops get an **Odometer Reading** and an
- *    **Upload Document** action.
- *  - Every stop gets a single **Mark as Completed** button.
- * All actions are mocks (a real build messages dispatch / stores files).
- */
-function StopActions({
-  kind,
-  completed,
-}: {
-  kind: TripStopKind;
-  completed: boolean;
-}) {
-  const isFreight = FREIGHT_KINDS.includes(kind);
-  const [docOpen, setDocOpen] = useState(false);
-  const [uploaded, setUploaded] = useState(false);
-  const [done, setDone] = useState(completed);
-
-  return (
-    <div className="space-y-2">
-      {isFreight && <OdometerCard />}
-
-      {isFreight && (
-        <div className="rounded-card bg-surface p-4 shadow-card">
-          <p className="flex items-center gap-2 text-sm font-bold text-ink">
-            <Icon name="upload" className="h-4 w-4 text-brand" />
-            Upload Document
-          </p>
-          <button
-            type="button"
-            onClick={() => setDocOpen(true)}
-            className="mt-3 flex w-full flex-col items-center gap-1.5 rounded-lg border border-dashed border-brand/40 bg-brand-light/40 py-6 text-brand"
-          >
-            <Icon name={uploaded ? "check" : "camera"} className="h-6 w-6" />
-            <span className="text-sm font-semibold">
-              {uploaded ? "Document uploaded" : "Upload Document"}
-            </span>
-          </button>
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={() => setDone(true)}
-        disabled={done}
-        className={`flex w-full items-center justify-center gap-1.5 rounded-lg py-3 text-sm font-semibold ${
-          done ? "bg-success/10 text-success" : "bg-brand text-white"
-        }`}
-      >
-        {done && <Icon name="check" className="h-4 w-4" />}
-        {done ? "Completed" : "Mark as Completed"}
-      </button>
-
-      <AddDocumentSheet
-        open={docOpen}
-        onClose={() => setDocOpen(false)}
-        onCapture={() => setUploaded(true)}
-      />
-    </div>
-  );
-}
-
 /**
  * TripStopRow — one stop in the trip timeline. Three visual states:
  * completed (green), the next pending stop (highlighted brand) and
- * upcoming stops (muted). Tapping expands the full stop detail.
+ * upcoming stops (muted). Tapping expands the full stop detail, with the
+ * status actions and action history under the same block.
  */
 export function TripStopRow({
   stop,
@@ -169,9 +54,14 @@ export function TripStopRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const kind = KIND[stop.kind];
-  const refLabel = PICKUP_KINDS.includes(stop.kind)
-    ? "Pick Up Number"
-    : "Drop Off Number";
+  const refLabel =
+    stop.kind === "drop-off" ? "Drop Off Number" : "Pick Up Number";
+  const noteLabel =
+    stop.kind === "pickup"
+      ? "Pickup Note"
+      : stop.kind === "drop-off"
+        ? "Drop Off Note"
+        : "Note";
 
   const state = stop.completed ? "done" : isNext ? "next" : "upcoming";
 
@@ -218,7 +108,7 @@ export function TripStopRow({
       </div>
 
       {/* Stop card + detail */}
-      <div className="min-w-0 flex-1 space-y-2 pb-4">
+      <div className="min-w-0 flex-1 pb-4">
         <div className={`overflow-hidden rounded-card ${card}`}>
           <button
             type="button"
@@ -312,18 +202,19 @@ export function TripStopRow({
                 <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
                   <p className="flex items-center gap-1.5 text-xs font-bold text-warning">
                     <Icon name="info" className="h-3.5 w-3.5" />
-                    Note
+                    {noteLabel}
                   </p>
                   <p className="mt-1 text-sm text-ink">{stop.note}</p>
                 </div>
               )}
+
+              {/* Status actions + history */}
+              <div className="border-t border-ink/10 pt-3">
+                <StopActions stop={stop} />
+              </div>
             </div>
           )}
         </div>
-
-        {expanded && (
-          <StopActions kind={stop.kind} completed={stop.completed} />
-        )}
       </div>
     </li>
   );

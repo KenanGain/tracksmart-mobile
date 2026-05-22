@@ -2,6 +2,7 @@ import { Icon } from "@/components/ui/Icon";
 import { TripSummary } from "./TripCard";
 import { TripMap } from "./TripMap";
 import { TripStopRow } from "./TripStopRow";
+import { TripSubmitCard } from "./TripSubmitCard";
 import type { Trip } from "@/lib/data/trips";
 import type { TripVariant } from "@/lib/api/trips";
 
@@ -98,6 +99,9 @@ export function TripDetailView({
           </div>
         </div>
       )}
+
+      {/* Submit documents, notes & photos */}
+      <TripSubmitCard />
 
       {trip.note && <TripNote note={trip.note} />}
 
