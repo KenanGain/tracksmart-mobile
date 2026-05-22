@@ -70,12 +70,11 @@ export function TripStopRow({
   const kind = KIND[stop.kind];
   const refLabel =
     stop.kind === "drop-off" ? "Drop Off Number" : "Pick Up Number";
-  const noteLabel =
-    stop.kind === "pickup"
-      ? "Pickup Note"
-      : stop.kind === "drop-off"
-        ? "Drop Off Note"
-        : "Note";
+  const noteLabel = stop.kind === "drop-off" ? "Drop Off Note" : "Pickup Note";
+
+  // Acquire / Hook happen at the yard — they skip the address book of
+  // detail rows (note, address, appointment, phone, email).
+  const isYardStop = stop.kind === "acquire" || stop.kind === "hook";
 
   const state = stop.completed ? "done" : isNext ? "next" : "upcoming";
 
@@ -182,45 +181,53 @@ export function TripStopRow({
                 </div>
               )}
 
-              {stop.note && (
-                <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
-                  <p className="flex items-center gap-1.5 text-xs font-bold text-warning">
-                    <Icon name="info" className="h-3.5 w-3.5" />
-                    {noteLabel}
-                  </p>
-                  <p className="mt-1 text-sm text-ink">{stop.note}</p>
-                </div>
-              )}
+              {!isYardStop && (
+                <>
+                  {stop.note && (
+                    <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                      <p className="flex items-center gap-1.5 text-xs font-bold text-warning">
+                        <Icon name="info" className="h-3.5 w-3.5" />
+                        {noteLabel}
+                      </p>
+                      <p className="mt-1 text-sm text-ink">{stop.note}</p>
+                    </div>
+                  )}
 
-              <DetailRow
-                icon="map-pin"
-                label="Address"
-                value={stop.address}
-                href={`https://www.google.com/maps/search/?api=1&query=${stop.lat},${stop.lng}`}
-              />
-              <DetailRow
-                icon="calendar"
-                label="Appointment"
-                value={stop.appointment}
-              />
-              {stop.pickupNumber && (
-                <DetailRow
-                  icon="file-text"
-                  label={refLabel}
-                  value={stop.pickupNumber}
-                />
+                  <DetailRow
+                    icon="map-pin"
+                    label="Address"
+                    value={stop.address}
+                    href={`https://www.google.com/maps/search/?api=1&query=${stop.lat},${stop.lng}`}
+                  />
+                  <DetailRow
+                    icon="calendar"
+                    label="Appointment"
+                    value={stop.appointment}
+                  />
+                  {stop.pickupNumber && (
+                    <DetailRow
+                      icon="file-text"
+                      label={refLabel}
+                      value={stop.pickupNumber}
+                    />
+                  )}
+                  {stop.temperature && (
+                    <DetailRow
+                      icon="thermometer"
+                      label="Temperature"
+                      value={stop.temperature}
+                    />
+                  )}
+                  {stop.phone && (
+                    <DetailRow icon="phone" label="Phone" value={stop.phone} />
+                  )}
+                  <DetailRow
+                    icon="mail"
+                    label="Email address"
+                    value={stop.email}
+                  />
+                </>
               )}
-              {stop.temperature && (
-                <DetailRow
-                  icon="thermometer"
-                  label="Temperature"
-                  value={stop.temperature}
-                />
-              )}
-              {stop.phone && (
-                <DetailRow icon="phone" label="Phone" value={stop.phone} />
-              )}
-              <DetailRow icon="mail" label="Email address" value={stop.email} />
 
               {/* Status actions + history */}
               <div className="border-t border-ink/10 pt-3">

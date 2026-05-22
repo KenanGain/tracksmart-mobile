@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { AddDocumentSheet } from "./AddDocumentSheet";
 import {
   TextField,
   DateField,
@@ -23,6 +24,8 @@ export function AddCertificationSheet({
 }) {
   const [category, setCategory] = useState("drug_test");
   const [result, setResult] = useState("pass");
+  const [docOpen, setDocOpen] = useState(false);
+  const [docAttached, setDocAttached] = useState(false);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

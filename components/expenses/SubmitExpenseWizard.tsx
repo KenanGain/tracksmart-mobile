@@ -35,7 +35,8 @@ export function SubmitExpenseWizard() {
 
   function back() {
     if (step === 1) {
-      router.push("/home");
+      // Return to wherever the form was opened from (Home or a trip).
+      router.back();
     } else {
       setStep((s) => s - 1);
     }

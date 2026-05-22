@@ -175,13 +175,18 @@ export function ToggleGroup({
   );
 }
 
-/** A labelled "upload" affordance — the picker itself is wired later. */
+/**
+ * A labelled "upload" affordance. `onClick` opens the capture flow
+ * (callers wire the `AddDocumentSheet`); `attached` shows the done state.
+ */
 export function UploadField({
   label,
   onClick,
+  attached,
 }: {
   label: string;
   onClick?: () => void;
+  attached?: boolean;
 }) {
   return (
     <div>
@@ -189,9 +194,13 @@ export function UploadField({
       <button
         type="button"
         onClick={onClick}
-        className="mt-1.5 w-full rounded-lg bg-surface-muted py-3 text-sm font-semibold text-brand"
+        className={`mt-1.5 w-full rounded-lg py-3 text-sm font-semibold ${
+          attached
+            ? "bg-success/10 text-success"
+            : "bg-surface-muted text-brand"
+        }`}
       >
-        + Upload Document
+        {attached ? "Document attached ✓" : "+ Upload Document"}
       </button>
     </div>
   );

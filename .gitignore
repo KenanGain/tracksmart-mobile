@@ -32,3 +32,9 @@ next-env.d.ts
 !.vscode/extensions.json
 .idea/
 Thumbs.db
+
+# Obsidian — track config (app.json, workspace.json) but not runtime state
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/plugins/
+.obsidian/themes/

@@ -107,20 +107,23 @@ tags: [screens, routes]
   has one of three states — **done** (green check), the **next** pending
   stop (brand ring + "Next" badge) or **upcoming** (muted). The rail node
   shows the stop number; the connector is green for completed segments.
-- Each stop expands to its detail — equipment (unit / trailer), the
-  per-stop note ("Pickup Note" / "Drop Off Note"), the address (tap to
-  open in **Google Maps**), appointment date & time, pick-up / drop-off
-  number, temperature, phone, email — then the status actions below.
-- **Status actions** (`StopActions`):
+- Each stop expands to its detail + status actions:
+  - **Acquire / Hook** are yard stops — they show only equipment
+    (unit / trailer) + the status action.
+  - **Pick Up / Drop Off** also show the per-stop note ("Pickup Note" /
+    "Drop Off Note"), the address (tap to open in **Google Maps**),
+    appointment date & time, pick-up / drop-off number, temperature,
+    phone and email.
+- **Status actions** (`StopActions`) — the dialogs are bottom sheets:
   - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived prompts an
     odometer reading (the value is kept in the history); Picked Up runs
-    confirm-trailer → confirm-temperature → document upload; Departed
-    completes directly.
+    confirm-trailer → confirm-temperature → document upload (the document
+    can be **skipped**); Departed completes directly.
   - **Drop Off** → **Arrived / Delivered**. Arrived prompts an odometer
     reading; Delivered runs a **receiver e-signature** → POD document
-    upload.
-  - **Acquire** → odometer reading, then **Mark as Completed**.
-  - **Hook** → a single **Mark as Completed** button.
+    upload (skippable).
+  - **Acquire** → **Mark as Completed** → odometer reading.
+  - **Hook** → **Mark as Completed** → confirm trailer.
 - Completed actions are listed under **Action History** with a timestamp
   (Arrived / Acquire keep the odometer value). **Pick Up** and **Drop
   Off** stops also show a **Navigate** button that opens directions.
@@ -225,8 +228,10 @@ tags: [screens, routes]
   mock (it just closes); capture and real submit need a backend.
 
 ### Submit Expense `/expenses/new`  ✅ done
-- Opened from Home → Expenses → "Submit New". Full-screen flow, no app
-  shell — its own header (back + "Submit Expense" + step N/5).
+- Opened from Home → Expenses → "Submit New", or a trip detail's
+  **Expense** row. Full-screen flow, no app shell — its own header (back
+  + "Submit Expense" + step N/5). The step-1 back button returns to
+  wherever the form was opened from (Home or the trip detail).
 - 5 steps:
   1. **Select Expense Type** — Payroll Addition / Company Paid; both run
      the same flow.

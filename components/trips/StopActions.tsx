@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { AddDocumentSheet } from "@/components/compliance/AddDocumentSheet";
 import type { TripStop } from "@/lib/data/trips";
 
@@ -19,36 +20,19 @@ function formatNow(): string {
   return `${date} ${time}`;
 }
 
-/** A centered modal dialog (scrim + card), width-matched to the frame. */
-function Modal({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="fixed inset-y-0 left-1/2 z-50 flex w-full max-w-shell -translate-x-1/2 items-center justify-center px-8">
-      <div className="absolute inset-0 bg-ink/50" aria-hidden="true" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="relative w-full rounded-2xl bg-surface p-5"
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/** Confirm the trailer number before picking up. */
+/** Confirm the trailer number — a bottom sheet. */
 function ConfirmTrailerDialog({
   trailer,
+  onClose,
   onProceed,
 }: {
   trailer: string;
+  onClose: () => void;
   onProceed: () => void;
 }) {
   return (
-    <Modal>
-      <h3 className="text-center text-base font-bold text-ink">
-        Confirm Trailer
-      </h3>
-      <div className="mt-4 rounded-xl bg-surface-muted py-4 text-center">
+    <BottomSheet open onClose={onClose} title="Confirm Trailer">
+      <div className="rounded-xl bg-surface-muted py-4 text-center">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
           Current Trailer
         </p>
@@ -61,16 +45,16 @@ function ConfirmTrailerDialog({
         <button
           type="button"
           onClick={onProceed}
-          className="flex-1 rounded-lg bg-danger py-2.5 text-sm font-bold text-white"
+          className="flex-1 rounded-lg bg-danger py-3 text-sm font-bold text-white"
         >
-          WRONG
+          Wrong
         </button>
         <button
           type="button"
           onClick={onProceed}
-          className="flex-1 rounded-lg bg-success py-2.5 text-sm font-bold text-white"
+          className="flex-1 rounded-lg bg-success py-3 text-sm font-bold text-white"
         >
-          CORRECT
+          Correct
         </button>
       </div>
       <button
@@ -80,57 +64,47 @@ function ConfirmTrailerDialog({
       >
         Skip
       </button>
-    </Modal>
+    </BottomSheet>
   );
 }
 
-/** A modal with a single value input + Cancel / Confirm. */
+/** A bottom sheet with a single value input + Confirm. */
 function ValueDialog({
   title,
   subtitle,
   placeholder,
   numeric,
-  onCancel,
+  onClose,
   onConfirm,
 }: {
   title: string;
   subtitle: string;
   placeholder: string;
   numeric?: boolean;
-  onCancel: () => void;
+  onClose: () => void;
   onConfirm: (value: string) => void;
 }) {
   const [value, setValue] = useState("");
   return (
-    <Modal>
-      <h3 className="text-center text-base font-bold text-ink">{title}</h3>
-      <p className="mt-1 text-center text-sm text-ink-muted">{subtitle}</p>
+    <BottomSheet open onClose={onClose} title={title}>
+      <p className="-mt-1 text-sm text-ink-muted">{subtitle}</p>
       <input
         type={numeric ? "number" : "text"}
         inputMode={numeric ? "numeric" : "text"}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
-        className="mt-4 w-full rounded-lg bg-surface-muted px-3 py-3 text-center text-sm text-ink outline-none placeholder:text-ink-muted focus:ring-2 focus:ring-brand/30"
+        className="mt-3 w-full rounded-lg bg-surface-muted px-3 py-3 text-sm text-ink outline-none placeholder:text-ink-muted focus:ring-2 focus:ring-brand/30"
       />
-      <div className="mt-4 flex gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 rounded-lg bg-surface-muted py-2.5 text-sm font-bold text-ink"
-        >
-          CANCEL
-        </button>
-        <button
-          type="button"
-          disabled={value.trim() === ""}
-          onClick={() => onConfirm(value.trim())}
-          className="flex-1 rounded-lg bg-brand py-2.5 text-sm font-bold text-white disabled:opacity-50"
-        >
-          CONFIRM
-        </button>
-      </div>
-    </Modal>
+      <button
+        type="button"
+        disabled={value.trim() === ""}
+        onClick={() => onConfirm(value.trim())}
+        className="mt-4 w-full rounded-lg bg-brand py-3 text-sm font-semibold text-white disabled:opacity-50"
+      >
+        Confirm
+      </button>
+    </BottomSheet>
   );
 }
 
@@ -210,44 +184,32 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
   );
 }
 
-/** Capture the driver's e-signature. */
+/** Capture the receiver's e-signature — a bottom sheet. */
 function SignatureDialog({
-  onCancel,
+  onClose,
   onConfirm,
 }: {
-  onCancel: () => void;
+  onClose: () => void;
   onConfirm: () => void;
 }) {
   const [signed, setSigned] = useState(false);
   return (
-    <Modal>
-      <h3 className="text-center text-base font-bold text-ink">
-        Receiver Signature
-      </h3>
-      <p className="mt-1 text-center text-sm text-ink-muted">
-        The receiver signs in the box to confirm delivery.
+    <BottomSheet open onClose={onClose} title="Receiver Signature">
+      <p className="-mt-1 text-sm text-ink-muted">
+        The receiver signs below to confirm delivery.
       </p>
-      <div className="mt-4">
+      <div className="mt-3">
         <SignaturePad onChange={setSigned} />
       </div>
-      <div className="mt-3 flex gap-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 rounded-lg bg-surface-muted py-2.5 text-sm font-bold text-ink"
-        >
-          CANCEL
-        </button>
-        <button
-          type="button"
-          disabled={!signed}
-          onClick={onConfirm}
-          className="flex-1 rounded-lg bg-brand py-2.5 text-sm font-bold text-white disabled:opacity-50"
-        >
-          CONFIRM
-        </button>
-      </div>
-    </Modal>
+      <button
+        type="button"
+        disabled={!signed}
+        onClick={onConfirm}
+        className="mt-3 w-full rounded-lg bg-brand py-3 text-sm font-semibold text-white disabled:opacity-50"
+      >
+        Confirm
+      </button>
+    </BottomSheet>
   );
 }
 
@@ -265,16 +227,17 @@ type HistoryEntry = { label: string; time: string; detail?: string };
  * StopActions — the status buttons for an expanded stop.
  *  - Pick Up → Arrived / Picked Up / Departed.
  *    · Arrived  → odometer reading (the value is kept in the history).
- *    · Picked Up → confirm trailer → confirm temperature → document upload.
+ *    · Picked Up → confirm trailer → confirm temperature → document
+ *      upload (the document can be skipped).
  *    · Departed → completes directly.
  *  - Drop Off → Arrived / Delivered.
  *    · Arrived  → odometer reading (kept).
- *    · Delivered → receiver e-signature → POD document upload.
- *  - Acquire → odometer reading, then Mark as Completed.
- *  - Hook → a single Mark as Completed button.
- * Navigate is shown only for Pick Up / Drop Off stops.
- * Completed actions are listed under **Action History** with a time, and
- * a **Navigate** button opens directions to the stop. All mocks.
+ *    · Delivered → receiver e-signature → POD document upload (skippable).
+ *  - Acquire → Mark as Completed → odometer reading.
+ *  - Hook → Mark as Completed → confirm trailer.
+ * Dialogs are bottom sheets. Completed actions are listed under **Action
+ * History** with a time; **Navigate** (Pick Up / Drop Off only) opens
+ * directions. All mocks.
  */
 export function StopActions({ stop }: { stop: TripStop }) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -369,15 +332,12 @@ export function StopActions({ stop }: { stop: TripStop }) {
             />
           </>
         ) : (
+          // Acquire → odometer · Hook → confirm trailer
           <StatusButton
             label="Completed"
             onClick={() => {
-              if (stop.kind === "acquire") {
-                setPending("Completed");
-                setDialog("odometer");
-              } else {
-                finish("Completed");
-              }
+              setPending("Completed");
+              setDialog(stop.kind === "acquire" ? "odometer" : "trailer");
             }}
           />
         )}
@@ -426,11 +386,15 @@ export function StopActions({ stop }: { stop: TripStop }) {
         </a>
       )}
 
-      {/* Dialog flow */}
+      {/* Dialog flow — bottom sheets */}
       {dialog === "trailer" && (
         <ConfirmTrailerDialog
           trailer={stop.trailer ?? ""}
-          onProceed={() => setDialog("temp")}
+          onClose={cancel}
+          onProceed={() => {
+            if (pending === "Picked Up") setDialog("temp");
+            else finish(pending ?? "Completed");
+          }}
         />
       )}
       {dialog === "temp" && (
@@ -438,7 +402,7 @@ export function StopActions({ stop }: { stop: TripStop }) {
           title="Confirm Temperature"
           subtitle={`Required: ${stop.temperature ?? "—"}`}
           placeholder="Enter current temp"
-          onCancel={cancel}
+          onClose={cancel}
           onConfirm={() => setDialog("document")}
         />
       )}
@@ -448,13 +412,13 @@ export function StopActions({ stop }: { stop: TripStop }) {
           subtitle="Enter the truck odometer (km)."
           placeholder="Enter km"
           numeric
-          onCancel={cancel}
+          onClose={cancel}
           onConfirm={(km) => finish(pending ?? "Arrived", `${km} km`)}
         />
       )}
       {dialog === "signature" && (
         <SignatureDialog
-          onCancel={cancel}
+          onClose={cancel}
           onConfirm={() => setDialog("document")}
         />
       )}
@@ -462,6 +426,7 @@ export function StopActions({ stop }: { stop: TripStop }) {
         open={dialog === "document"}
         onClose={cancel}
         onCapture={() => finish(pending ?? "Picked Up")}
+        onSkip={() => finish(pending ?? "Picked Up")}
       />
     </div>
   );

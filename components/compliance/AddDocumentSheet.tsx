@@ -57,16 +57,19 @@ function CaptureRow({
  * Flutter app. On web they would use an `<input type="file">`.
  *
  * `onCapture` (optional) fires when a capture option is picked — callers
- * use it to record that a document was attached.
+ * use it to record that a document was attached. `onSkip` (optional)
+ * adds a "Skip for now" button — the caller proceeds without a document.
  */
 export function AddDocumentSheet({
   open,
   onClose,
   onCapture,
+  onSkip,
 }: {
   open: boolean;
   onClose: () => void;
   onCapture?: () => void;
+  onSkip?: () => void;
 }) {
   const capture = () => {
     onCapture?.();
@@ -96,10 +99,22 @@ export function AddDocumentSheet({
         />
       </div>
 
+      {onSkip && (
+        <button
+          type="button"
+          onClick={onSkip}
+          className="mt-4 w-full rounded-lg bg-surface-muted py-3 text-sm font-semibold text-ink"
+        >
+          Skip for now
+        </button>
+      )}
+
       <button
         type="button"
         onClick={onClose}
-        className="mt-4 w-full py-2 text-center text-sm font-medium text-ink-muted underline"
+        className={`w-full py-2 text-center text-sm font-medium text-ink-muted underline ${
+          onSkip ? "mt-2" : "mt-4"
+        }`}
       >
         Cancel
       </button>
