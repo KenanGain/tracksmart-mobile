@@ -10,31 +10,33 @@ updated: 2026-05-22
 # 🦋 Flutter Mirror Spec — TrackSmart Mobile
 
 > [!abstract] What this file is
-> A **living build plan** for the Stage-2 Flutter native app. Every time a screen is implemented in Next.js, its Flutter equivalent is described here in the same change (**dual-output rule** — see [[agents/01-shared-context]] §3). When Stage 2 begins, this file is already a complete, screen-by-screen Flutter spec.
+> A **living build plan** for Stage-2 Flutter native app. Every screen implemented in Next.js must have its Flutter equivalent described here — the **dual-output rule** ([[agents/01-shared-context]] §3). When Stage 2 begins, this is already a complete, screen-by-screen Flutter spec.
 
-> [!important] How to use this file
-> - **Implementing in Next.js?** After the screen works, add/update its section below
-> - **Starting Flutter Stage 2?** Read this file top-to-bottom — it is your build plan
-> - **Source file:** this note mirrors `prompts/flutter.md` in the repo (they are kept in sync)
+> [!important] Source sync
+> This note mirrors `prompts/flutter.md` in the repo root. Keep them in sync.
 
 ---
 
 ## Global Setup
 
 ### Dependencies (`pubspec.yaml`)
+
 ```yaml
 dependencies:
-  flutter: sdk: flutter
-  go_router: ^14.0.0          # routing (mirrors Next.js App Router)
-  riverpod: ^2.5.0            # state (mirrors React Server + useState)
-  flutter_riverpod: ^2.5.0
+  flutter: {sdk: flutter}
+  go_router: ^14.0.0          # mirrors Next.js App Router
+  flutter_riverpod: ^2.5.0    # mirrors React Server + useState
+  riverpod_annotation: ^2.3.0
   cached_network_image: ^3.3.0
   flutter_map: ^7.0.0         # Leaflet equivalent
-  latlong2: ^0.9.0            # lat/lng types for flutter_map
-  intl: ^0.19.0               # date formatting (mirrors lib/format.ts)
+  latlong2: ^0.9.0
+  intl: ^0.19.0               # mirrors lib/format.ts
+  signature: ^5.4.0           # mirrors SignaturePad canvas
 ```
 
-### Routing (`go_router`) — mirrors Next.js App Router
+---
+
+### Routing (`go_router`) — mirrors App Router
 
 ```dart
 GoRouter(
@@ -42,8 +44,7 @@ GoRouter(
   routes: [
     GoRoute(path: '/auth/sign-in', builder: (_,__) => const SignInScreen()),
 
-    // Shell route = AppShell with BottomNavigationBar
-    ShellRoute(
+    ShellRoute(  // mirrors (app)/ route group
       builder: (_, __, child) => AppShell(child: child),
       routes: [
         GoRoute(path: '/home',     builder: (_,__) => const HomeScreen()),
@@ -52,79 +53,145 @@ GoRouter(
         GoRoute(path: '/calendar', builder: (_,__) => const ScheduleScreen()),
         GoRoute(path: '/chats',    builder: (_,__) => const ChatsScreen()),
         // Detail routes inside shell:
-        GoRoute(path: '/trips/:id',      builder: (_,s) => TripDetailScreen(id: s.pathParameters['id']!)),
-        GoRoute(path: '/compliance',     builder: (_,__) => const ComplianceScreen()),
+        GoRoute(path: '/trips/:id',
+          builder: (_,s) => TripDetailScreen(id: s.pathParameters['id']!)),
+        GoRoute(path: '/compliance',          builder: (_,__) => const ComplianceScreen()),
         GoRoute(path: '/account/settings',    builder: (_,__) => const SettingsScreen()),
         GoRoute(path: '/account/trip-history',builder: (_,__) => const TripHistoryScreen()),
         GoRoute(path: '/account/about',       builder: (_,__) => const AboutScreen()),
       ],
     ),
 
-    // Full-screen routes (no shell):
-    GoRoute(path: '/notifications',     builder: (_,__) => const NotificationsScreen()),
-    GoRoute(path: '/expenses',          builder: (_,__) => const ExpenseStatusScreen()),
-    GoRoute(path: '/expenses/new',      builder: (_,__) => const SubmitExpenseScreen()),
-    GoRoute(path: '/trip-sheets',       builder: (_,__) => const TripSheetStatusScreen()),
-    GoRoute(path: '/trip-sheets/new',   builder: (_,__) => const SubmitTripSheetScreen()),
-    GoRoute(path: '/chat/:id',          builder: (_,s) => ChatThreadScreen(id: s.pathParameters['id']!)),
+    // Full-screen routes — no shell
+    GoRoute(path: '/notifications',    builder: (_,__) => const NotificationsScreen()),
+    GoRoute(path: '/expenses',         builder: (_,__) => const ExpenseStatusScreen()),
+    GoRoute(path: '/expenses/new',     builder: (_,__) => const SubmitExpenseScreen()),
+    GoRoute(path: '/trip-sheets',      builder: (_,__) => const TripSheetStatusScreen()),
+    GoRoute(path: '/trip-sheets/new',  builder: (_,__) => const SubmitTripSheetScreen()),
+    GoRoute(path: '/chat/:id',
+      builder: (_,s) => ChatThreadScreen(id: s.pathParameters['id']!)),
   ],
 )
 ```
+
+---
 
 ### Theme (`ThemeData`) — mirrors Tailwind tokens
 
 ```dart
 ThemeData(
   colorScheme: ColorScheme.fromSeed(
-    seedColor: const Color(0xFF1D4ED8),  // brand
-    primary:   const Color(0xFF1D4ED8),  // brand
-    surface:   const Color(0xFFFFFFFF),  // surface
-    background:const Color(0xFFF8FAFC),  // surface-muted
-    error:     const Color(0xFFDC2626),  // danger
+    seedColor: const Color(0xFF1D4ED8),   // brand
+    primary:    const Color(0xFF1D4ED8),  // brand
+    surface:    Colors.white,             // surface
+    surfaceVariant: const Color(0xFFF8FAFC), // surface-muted
+    error:      const Color(0xFFDC2626),  // danger
+    onPrimary:  Colors.white,
+    onSurface:  const Color(0xFF0F172A),  // ink
   ),
   cardTheme: CardTheme(
     elevation: 1,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     color: Colors.white,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12)), // rounded-card
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
   ),
 )
 ```
 
-### AppShell (`components/shell/AppShell.tsx` → `AppShell` widget)
+---
+
+### AppShell — mirrors `components/shell/AppShell.tsx`
 
 ```dart
-class AppShell extends StatelessWidget {
-  final Widget child;
+class AppShell extends StatefulWidget { ... }
+
+class _AppShellState extends State<AppShell> {
+  int _index = 0;
+  final _tabs = ['/home', '/trips', '/bulletin', '/calendar', '/chats'];
+
+  Widget build(BuildContext context) => Scaffold(
+    body: widget.child,
+    bottomNavigationBar: NavigationBar(
+      selectedIndex: _index,
+      onDestinationSelected: (i) {
+        setState(() => _index = i);
+        context.go(_tabs[i]);
+      },
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.home_outlined),         label: 'Home'),
+        NavigationDestination(icon: Icon(Icons.route_outlined),        label: 'Trips'),
+        NavigationDestination(icon: Icon(Icons.campaign_outlined),     label: 'Bulletin'),
+        NavigationDestination(icon: Icon(Icons.calendar_today_outlined),label: 'Schedule'),
+        NavigationDestination(icon: Icon(Icons.chat_bubble_outline),   label: 'Chats'),
+      ],
+    ),
+  );
+}
+```
+
+---
+
+### PillTabs — mirrors `components/ui/PillTabs.tsx`
+
+```dart
+/// Rounded bubble tab bar — mirrors PillTabs.tsx
+/// Used by TripsScreen and ExpenseStatusScreen.
+class PillTabs extends StatelessWidget {
+  final List<PillTabItem> tabs;
+  final String active;
+  final ValueChanged<String> onChanged;
 
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.route_outlined), label: 'Trips'),
-          BottomNavigationBarItem(icon: Icon(Icons.campaign_outlined), label: 'Bulletin'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today_outlined), label: 'Schedule'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chats'),
-        ],
-        selectedItemColor: Theme.of(context).colorScheme.primary,
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0,1))],
+      ),
+      child: Row(
+        children: tabs.map((tab) {
+          final isActive = tab.key == active;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => onChanged(tab.key),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isActive ? primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: isActive
+                    ? [BoxShadow(color: primary.withOpacity(0.3), blurRadius: 6)]
+                    : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (tab.icon != null) Icon(tab.icon,
+                      size: 16,
+                      color: isActive ? Colors.white : Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(tab.label,
+                      style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600,
+                        color: isActive ? Colors.white : Colors.grey[600])),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 }
-```
-
-### Repository Layer — mirrors `lib/api/*`
-
-```dart
-// lib/repositories/trips_repository.dart
-abstract class TripsRepository {
-  Future<List<Trip>> getTrips();
-  Future<Trip> getTrip(String id);
-}
-
-// lib/repositories/mock/mock_trips_repository.dart
-// (mirrors lib/data/trips.ts — replaced by real HTTP client in Stage 2)
 ```
 
 ---
@@ -135,152 +202,140 @@ abstract class TripsRepository {
 
 ### 🔐 Sign In `/auth/sign-in`
 
-**go_router route:** `/auth/sign-in`
-
-**Widget tree:**
 ```
 Scaffold (no AppBar)
   SafeArea
     SingleChildScrollView
       Column
-        SizedBox(height)
-        _BrandBlock (logo tile + AppName + tagline)
+        _BrandBlock          (dark container, logo, AppName, tagline)
         Card
           Column
             Text("Sign in to your account")
-            _DemoUserDropdown (DropdownButtonFormField)
+            _DemoUserDropdown (DropdownButtonFormField<User>)
             _OrDivider
-            TextFormField (email)
-            TextFormField (password, obscureText + visibility toggle)
-            Text("Demo password: demo1234")
-            ElevatedButton("Sign In")
-        Text("Prototype build…")
+            TextFormField     (email)
+            TextFormField     (password, obscureText + suffix toggle icon)
+            ElevatedButton    ("Sign In") → AuthRepository.signIn()
+        Text                  (prototype disclaimer)
 ```
 
-**Repository:** `AuthRepository.signIn(email, password)` → navigates to `/home` on success
-
-**Tokens:**
-- Logo tile: `BoxDecoration(color: Color(0xFF0F172A), borderRadius: BorderRadius.circular(16))`
-- Sign In button: `ElevatedButton` with `backgroundColor: primary`
+**Repository:** `AuthRepository.signIn(email, password)` → on success `context.go('/home')`
 
 ---
 
 ### 🏠 Home `/home`
 
-**go_router route:** `/home` (inside ShellRoute)
-
-**Widget tree:**
 ```
 CustomScrollView
   SliverPadding
     SliverList
-      _CompanyCard         (carrier logo monogram + name)
-      _ComplianceCard      (tap → /compliance)
-      _ActionCard("Expenses", submit/status buttons)
-      _ActionCard("Maintenance Requests")
-      _ActionCard("Trip Sheets")
+      _CompanyCard
+      _ComplianceCard       → go('/compliance') on tap
+      _ActionCard("Expenses",
+        primary: "Submit New" → go('/expenses/new'),
+        secondary: "Status"  → go('/expenses'))
+      _ActionCard("Maintenance Requests")   [placeholder]
+      _ActionCard("Trip Sheets",
+        primary: "Submit New" → go('/trip-sheets/new'),
+        secondary: "Status"  → go('/trip-sheets'))
       _PayrollCard
-      _TimeTrackingCard    (clock in/out toggle + elapsed timer)
+      _TimeTrackingCard     (Timer.periodic, clock in/out toggle)
       _RefreshHelpRow
-      _LogoutButton
+      _LogoutButton         → showDialog(AlertDialog) → go('/auth/sign-in')
 ```
 
 **Repository:** `HomeRepository.getHomeData()` → `FutureProvider<HomeData>`
 
-**Tokens:**
-- Card background: `Theme.of(context).cardColor` (white)
-- Page background: `Theme.of(context).colorScheme.background`
-- Submit button: `ElevatedButton` (brand blue)
-- Logout button: `OutlinedButton` (danger red)
-
-**Key behaviours:**
-- Time tracking: `Timer.periodic(Duration(seconds: 1), ...)` while clocked in (mirrors `setInterval`)
-- Logout shows `AlertDialog` confirmation
+**Time tracking:** `Timer.periodic(Duration(seconds:1), ...)` while `_clockedIn == true`.
 
 ---
 
 ### 🛣️ Trips `/trips`
 
-**go_router route:** `/trips` (inside ShellRoute)
-
-**Widget tree:**
 ```
-CustomScrollView
-  SliverList
-    _TripSection("Current Trip", [Trip])
-    _TripSection("Upcoming Trips", [Trip])
-    _TripSection("Previous Trips", [Trip])
-
-// _TripSection:
-ExpansionTile (collapsible, count badge)
-  _TripCard for each trip
-
-// _TripCard:
-Card
-  Column
-    Row (trip ref + StatusBadge)
-    Text (origin → destination)
-    Text (date window)
-    _MetaRow (stops · power unit · equipment)
-    _TripMapPreview (FlutterMap, non-interactive thumbnail)
-    TextButton("View trip →")  → go to /trips/:id
+Column
+  PillTabs(                    // mirrors PillTabs.tsx
+    tabs: [current, upcoming, previous],
+    active: _tab,
+    onChanged: setState)
+  Expanded
+    // tab == 'current':
+    TripCard(trip: trips.current, variant: current)
+    // tab == 'upcoming':
+    ListView(trips.upcoming.map(TripCard(variant: upcoming)))
+    // tab == 'previous':
+    ListView(trips.previous.map(TripCard(variant: previous)))
+    // empty:
+    _EmptyNote(text: "No current trip")
 ```
 
 **Repository:** `TripsRepository.getTrips()` → `FutureProvider<TripsData>`
 
-**Map:** `FlutterMap` with `TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png')` + `PolylineLayer` + `MarkerLayer`
-
-**Tokens:**
-- "In Progress" badge: `Chip(backgroundColor: primary, label: Text("In Progress", style: TextStyle(color: white)))`
-- Countdown badge: amber `Chip`
+**Map (TripCard current variant):** `FlutterMap` + `TileLayer` (OSM) + `PolylineLayer` (brand) + `MarkerLayer` (numbered pins).
 
 ---
 
 ### 📋 Trip Detail `/trips/:id`
 
-**go_router route:** `/trips/:id`
-
-**Widget tree:**
 ```
 Scaffold
-  AppBar (back button + "Trip <id>")
+  AppBar(leading: BackButton, title: Text("Trip <id>"))
   CustomScrollView
-    _TripSummaryCard (route map)
-    _TripProgressStrip (LinearProgressIndicator + done/total)
+    _TripSummaryCard (FlutterMap embedded)
+    _TripProgressStrip (LinearProgressIndicator)
     _DispatchNoteCard
-    _TripDetailsCard (equipment, driver, dispatcher)
+    _TripDetailsCard
     _StopTimeline
-      _StopRow for each stop (3 states: done/next/upcoming)
-        // Expandable detail:
+      _TripStopRow for each stop
         ExpansionTile
-          _StopDetail (address, times, refs, contacts)
-          // Freight stops additionally:
-          TextFormField (odometer)
-          OutlinedButton("Upload Document")
-          ElevatedButton("Mark as Completed")
+          _StopDetail (address, times, refs)
+          _StopActions (state machine widget)
 ```
 
-**Repository:** `TripsRepository.getTrip(id)` → `FutureProvider.family<Trip, String>`
+**`_StopActions` state machine (mirrors `StopActions.tsx`):**
+```dart
+class _StopActionsState extends State<StopActions> {
+  List<HistoryEntry> history = [];
+  String? dialog;   // 'trailer' | 'temp' | 'odometer' | 'signature' | 'document'
+  String? pending;
+
+  // Per-kind button config:
+  // pickup  → [Arrived, Picked Up, Departed]
+  // drop-off → [Arrived, Delivered]
+  // acquire → [Completed]
+  // hook    → [Completed]
+  // others  → [Completed]
+
+  // Dialog chain:
+  // Arrived → odometer ValueDialog → finish
+  // Picked Up → ConfirmTrailerDialog → temp ValueDialog → AddDocumentSheet
+  // Delivered → SignatureBottomSheet → AddDocumentSheet
+  // Acquire/Completed → odometer ValueDialog
+  // Hook/Completed → ConfirmTrailerDialog
+}
+```
+
+**SignatureBottomSheet:** Use `signature` package (`SignatureController`), Clear + Confirm + Skip.
 
 ---
 
 ### 📢 Bulletin `/bulletin`
 
-**go_router route:** `/bulletin`
-
-**Widget tree:**
 ```
 Column
-  SearchBar
+  _SearchBar
   Expanded
     ListView.builder
-      _LoadTenderCard for each tender
-        // Before action:
-        Column (sender, route, pickup/delivery)
-        Row (ElevatedButton("Accept"), OutlinedButton("Decline"))
-        // After action:
-        Chip(status badge)
-        ExpansionTile (full detail)
+      _LoadTenderCard
+        Column
+          Row (sender avatar, name, time, unread dot)
+          Text (route summary)
+          Text (pickup / delivery dates)
+          Row
+            ElevatedButton("Accept")  → setState accepted
+            OutlinedButton("Decline") → setState declined
+        // after action:
+        Chip(status) + ExpansionTile(full detail)
 ```
 
 **Repository:** `BulletinRepository.getLoadTenders()` → `StateNotifierProvider`
@@ -289,171 +344,177 @@ Column
 
 ### 📅 Schedule `/calendar`
 
-**go_router route:** `/calendar`
-
-**Widget tree:**
 ```
 Column
-  ToggleButtons (Calendar | List)
+  ToggleButtons([Text("Calendar"), Text("List")])
   Expanded
     // Calendar view:
     Column
-      _MonthHeader (prev/next buttons)
-      TableCalendar or custom GridView
-      _DayDetail (Events + Shifts + Timesheet for selected day)
+      _MonthHeader (prev/next IconButtons)
+      GridView (7-col, day cells with dot indicators)
+      _DayDetail (TabBar: Events | Shifts | Timesheet)
     // List view:
-    ListView.builder (date-grouped agenda)
-      _AgendaDateHeader
-      _AgendaRow (icon chip, title, kind tag)
+    ListView.builder
+      _AgendaDateHeader (date + "Today" badge)
+      _AgendaRow (icon, title, kind tag)
 ```
-
-**Repository:** `ScheduleRepository.getScheduleData()` → `FutureProvider`
 
 ---
 
 ### 💬 Chats `/chats`
 
-**go_router route:** `/chats`
-
-**Widget tree:**
 ```
 Column
-  SearchBar
+  _SearchBar
   Expanded
     ListView.builder
-      _ConversationTile (avatar, name, last message, time, unread dot)
-  FloatingActionButton("New chat")
-    → showModalBottomSheet: _ContactPicker (searchable list)
+      ListTile
+        leading: CircleAvatar (initials)
+        title: Text(name)
+        subtitle: Text(lastMessage)
+        trailing: Column(time, _UnreadDot)
+        onTap: go('/chat/${conversation.id}')
+  FloatingActionButton(label: "New chat")
+    → showModalBottomSheet(_ContactPicker)
 ```
-
-**Repository:** `ChatsRepository.getConversations()` + `getContacts()`
 
 ---
 
 ### 💬 Chat Thread `/chat/:id`
 
-**go_router route:** `/chat/:id` (full-screen, no shell)
-
-**Widget tree:**
 ```
 Scaffold
-  AppBar (back + contact name)
+  AppBar(leading: BackButton, title: Text(contactName))
   Column
     Expanded
-      ListView.builder (reversed)
-        _MessageBubble (incoming: grey, outgoing: brand blue)
+      ListView.builder(reverse: true)
+        _MessageBubble
+          // incoming: Align.left, grey container
+          // outgoing: Align.right, primary container
         _DayDivider
-    _MessageInputBar (TextField + attach + send)
+    _MessageInputBar
+      Row(TextField, IconButton(attach), IconButton(send))
 ```
 
 ---
 
 ### 🔔 Notifications `/notifications`
 
-**go_router route:** `/notifications` (full-screen, no shell)
-
-**Widget tree:**
 ```
 Scaffold
-  AppBar (back + "Notifications")
+  AppBar(leading: BackButton, title: Text("Notifications"))
   Column
-    SearchBar
+    _SearchBar
     Expanded
       ListView.builder
-        _NotificationRow (icon chip, title+time, message, unread dot)
+        _NotificationRow
+          Row(icon chip, Column(title+time, message), _UnreadDot)
 ```
 
 ---
 
 ### 📄 Compliance `/compliance`
 
-**go_router route:** `/compliance` (inside shell, detail route)
-
-**Widget tree:**
 ```
 CustomScrollView
-  _ComplianceSectionHeader("Basic")
-    _DocumentCard("Driver's License", fields, "Update" button)
-    _DocumentCard("Passport", fields, "Update" button)
-    _DocumentCard("Emergency Contact", fields, "Update" button)
-  _ComplianceSectionHeader("Documents")
-    ElevatedButton("Add") → showModalBottomSheet(_AddDocumentSheet)
-  _ComplianceSectionHeader("Certifications")
-    ElevatedButton("Add") → showModalBottomSheet(_AddCertificationForm)
-```
-
----
-
-### 💸 Submit Expense `/expenses/new`
-
-**go_router route:** `/expenses/new` (full-screen, no shell)
-
-**Widget tree:**
-```
-Scaffold
-  AppBar (back + "Submit Expense" + "Step N/5")
-  Stepper (linear, 5 steps)
-    Step 1: _ExpenseTypeStep (Radio buttons)
-    Step 2: _AddReceiptStep (grid of capture options)
-    Step 3: _ExpenseDetailsStep (amount, currency, description, vendor)
-    Step 4: _ExpenseCategoryStep (Radio + truck search)
-    Step 5: _ReviewSubmitStep (summary + ElevatedButton)
+  _SectionHeader("Basic")
+  _DocumentCard("Driver's License") + ElevatedButton("Update")
+  _DocumentCard("Passport")         + ElevatedButton("Update")
+  _DocumentCard("Emergency Contact")
+  _SectionHeader("Documents")
+  ElevatedButton("Add") → showModalBottomSheet(_AddDocumentSheet)
+  _SectionHeader("Certifications")
+  ElevatedButton("Add") → showModalBottomSheet(_AddCertificationForm)
 ```
 
 ---
 
 ### 💸 Expense Status `/expenses`
 
-**go_router route:** `/expenses` (full-screen, no shell)
+```
+Column
+  AppBar(leading: BackButton, title: "Expense Status")
+  PillTabs(tabs: [payroll, company], ...)   // mirrors PillTabs.tsx
+  _SearchBar
+  Expanded
+    ListView.builder (filtered by tab + query)
+      Card
+        Row(Text(description), StatusChip)
+        _TripIdChip (brand-light bg)
+        Text(amount + currency + date)
+  // empty: Card("No expenses found")
+```
 
-**Widget tree:**
+**Repository:** `ExpensesRepository.getExpenses()` → `StateNotifierProvider`  
+**Filter:** by `expenseType == tab && description.contains(query)`
+
+---
+
+### 💸 Submit Expense `/expenses/new`
+
 ```
 Scaffold
-  AppBar (back + "Expense Status")
+  AppBar(leading: BackButton, title: "Submit Expense · Step N/5")
+  Stepper(type: StepperType.horizontal, steps: [
+    Step(title: "Type",     content: _ExpenseTypeStep),
+    Step(title: "Receipt",  content: _AddReceiptStep),
+    Step(title: "Details",  content: _ExpenseDetailsStep),
+    Step(title: "Category", content: _ExpenseCategoryStep),
+    Step(title: "Review",   content: _ReviewSubmitStep),
+  ])
+```
+
+---
+
+### 📋 Trip Sheet Status `/trip-sheets`
+
+```
+Scaffold
+  AppBar(leading: BackButton, title: "Trip Sheet Status")
   ListView.builder
-    _ExpenseRow (description, amount, date, StatusBadge)
+    Card: period range + StatusChip + submitted date
 ```
 
 ---
 
 ### ⚙️ Settings `/account/settings`
 
-**go_router route:** `/account/settings`
-
-**Widget tree:**
 ```
 Scaffold
-  AppBar (back + "Settings")
+  AppBar(leading: BackButton, title: "Settings")
   ListView
     _SectionHeader("Notifications")
-    SwitchListTile("Trip")
-    SwitchListTile("Message")
-    SwitchListTile("Bulletin")
-    SwitchListTile("Calendar")
+    SwitchListTile("Trip", value, onChanged)
+    SwitchListTile("Message", ...)
+    SwitchListTile("Bulletin", ...)
+    SwitchListTile("Calendar", ...)
     _SectionHeader("Appearance")
-    ListTile("Font Size", trailing: Text(currentValue))   → cycles on tap
-    ListTile("Theme", trailing: Text(currentValue))       → cycles on tap
+    ListTile("Font Size", trailing: Text(size)) → cycle on tap
+    ListTile("Theme",     trailing: Text(theme)) → cycle on tap
 ```
 
 ---
 
 ## Component Mapping Reference
 
-| Next.js Component | Flutter Widget |
-|-------------------|----------------|
-| `AppShell` | `ShellRoute` + custom `AppShell` + `BottomNavigationBar` |
-| `TopBar` | `AppBar` (customised) |
-| `BottomNav` | `BottomNavigationBar` |
+| Next.js | Flutter |
+|---------|---------|
+| `AppShell` | `ShellRoute` + custom `AppShell` + `NavigationBar` |
+| `TopBar` | `AppBar` |
+| `BottomNav` | `NavigationBar` (M3) |
+| **`PillTabs`** | Custom `PillTabs` widget (see above) |
 | `BottomSheet` | `showModalBottomSheet` |
-| `StatusBadge` | Custom `Chip` widget |
-| `Icon` | `Icon` (Material) or custom SVG via `flutter_svg` |
-| `TripMap` / `TripMapLeaflet` | `FlutterMap` + `TileLayer` + `PolylineLayer` + `MarkerLayer` |
-| `ScreenPlaceholder` | `Center(child: Column([Text, Text, ...]))` |
-| Form fields | `TextFormField` inside `Form` |
-| `AccountDrawer` | `Drawer` opened from `AppBar` action |
+| `StatusBadge` | Custom `Chip` / `Container` |
+| `Icon` | `Icon` (Material) |
+| `TripMap` / `TripMapLeaflet` | `FlutterMap` + `TileLayer` + layers |
+| `ScreenPlaceholder` | `Center(Column([Icon, Text, ...]))` |
+| Form fields | `TextFormField` in `Form` |
+| `AccountDrawer` | `Drawer` from `AppBar` action |
+| **`SignaturePad`** | `signature` package `Signature` widget |
+| **`StopActions`** | `_StopActionsState` state machine widget |
 
 ---
 
 ## 🔗 Related
 
-[[agents/00-agents-home]] · [[agents/01-shared-context]] · [[06-roadmap]] · [[02-screens]]
+[[agents/00-agents-home]] · [[agents/01-shared-context]] · [[06-roadmap]] · [[02-screens]] · [[03-design-system]]

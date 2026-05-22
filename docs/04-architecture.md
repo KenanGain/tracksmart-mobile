@@ -8,7 +8,7 @@ updated: 2026-05-22
 # 🏗️ Architecture — TrackSmart Mobile
 
 > [!abstract] Purpose
-> How the Next.js mobile view is wired. Read [[01-design]] first for the product context, then this note for the engineering decisions.
+> How the Next.js mobile view is wired. Read [[01-design]] for product context first.
 
 ---
 
@@ -16,13 +16,12 @@ updated: 2026-05-22
 
 | Concern | Choice | Notes |
 |---------|--------|-------|
-| Framework | **Next.js 15** (App Router) | Mobile-only; no desktop layout |
-| Language | **TypeScript** (strict) | `noImplicitAny`, no `any` |
+| Framework | **Next.js 15** (App Router) | Mobile-only |
+| Language | **TypeScript** (strict) | No `any` |
 | Styling | **Tailwind CSS 3** | Tokens in `tailwind.config.ts` |
 | Rendering | React Server Components | `"use client"` only when needed |
-| Maps | **Leaflet + OpenStreetMap** | No API key; loaded client-only via `next/dynamic` |
-| Data (now) | `lib/api` over `lib/data` mock | Typed, async; real API drop-in later |
-| Data (later) | Real TrackSmart backend API | Same service layer interface |
+| Maps | **Leaflet + OpenStreetMap** | `react-leaflet`, no API key, `next/dynamic` |
+| Data | `lib/api` over `lib/data` mock | Typed async service layer |
 
 ---
 
@@ -31,173 +30,184 @@ updated: 2026-05-22
 ```
 c:\Users\kenan\Mobile app\
 │
-├── app/                          ← Next.js App Router routes
-│   ├── layout.tsx                Root layout — document, viewport
+├── app/
+│   ├── layout.tsx                Root layout
 │   ├── globals.css               Tailwind base + .app-shell
-│   ├── page.tsx                  /  → redirects to /auth/sign-in
-│   ├── not-found.tsx             404
+│   ├── page.tsx                  / → redirects to /auth/sign-in
+│   ├── not-found.tsx
 │   │
-│   ├── (app)/                    ← Route group WITH phone shell
-│   │   ├── layout.tsx            Wraps screens in <AppShell>
-│   │   ├── home/page.tsx         /home
-│   │   ├── trips/page.tsx        /trips
-│   │   ├── trips/[id]/page.tsx   /trips/[id]
-│   │   ├── bulletin/page.tsx     /bulletin
-│   │   ├── calendar/page.tsx     /calendar
-│   │   ├── chats/page.tsx        /chats
-│   │   ├── compliance/page.tsx   /compliance
+│   ├── (app)/                    ← Shell group (TopBar + BottomNav)
+│   │   ├── layout.tsx            → <AppShell>
+│   │   ├── home/page.tsx
+│   │   ├── trips/
+│   │   │   ├── page.tsx
+│   │   │   └── [id]/page.tsx
+│   │   ├── bulletin/page.tsx
+│   │   ├── calendar/page.tsx
+│   │   ├── chats/page.tsx
+│   │   ├── compliance/page.tsx
 │   │   └── account/
-│   │       ├── settings/
-│   │       ├── trip-history/
-│   │       └── about/
+│   │       ├── settings/page.tsx
+│   │       ├── trip-history/page.tsx
+│   │       └── about/page.tsx
 │   │
-│   ├── auth/                     ← Pre-login (NO shell)
-│   │   └── sign-in/page.tsx
-│   │
+│   ├── auth/sign-in/page.tsx     ← Pre-login (NO shell)
 │   ├── expenses/                 ← Full-screen flow (NO shell)
-│   │   ├── page.tsx              /expenses (status list)
-│   │   └── new/page.tsx          /expenses/new (wizard)
-│   │
+│   │   ├── page.tsx
+│   │   └── new/page.tsx
 │   ├── trip-sheets/              ← Full-screen flow (NO shell)
-│   ├── notifications/            ← Full-screen (NO shell)
-│   └── chat/[id]/                ← Full-screen chat thread (NO shell)
+│   │   ├── page.tsx
+│   │   └── new/page.tsx
+│   ├── notifications/page.tsx    ← Full-screen (NO shell)
+│   └── chat/[id]/page.tsx        ← Full-screen (NO shell)
 │
 ├── components/
-│   ├── shell/    AppShell · TopBar · BottomNav
-│   ├── account/  AccountDrawer · SettingsScreen
-│   ├── auth/     SignInForm
-│   ├── bulletin/ BulletinList · BulletinCard
-│   ├── calendar/ CalendarScreen · CalendarView · CalendarEventsList
-│   ├── chats/    ChatsList · ChatThread · NewChatSheet
-│   ├── compliance/
-│   ├── expenses/ SubmitExpenseWizard + status list
-│   ├── home/     HomeCards (company, compliance, action, time-tracking…)
-│   ├── notifications/
-│   ├── trip-sheets/
-│   ├── trips/    TripsView · TripCard · TripDetailView · TripStopRow
-│   │             TripMap · TripMapLeaflet
-│   └── ui/       Icon · BottomSheet · StatusBadge · ScreenPlaceholder · form/
+│   ├── shell/          AppShell · TopBar · BottomNav
+│   ├── account/        AccountDrawer · SettingsScreen
+│   ├── auth/           SignInForm
+│   ├── bulletin/       BulletinList · BulletinCard
+│   ├── calendar/       CalendarScreen · CalendarView · CalendarEventsList
+│   ├── chats/          ChatsList · ChatThread · NewChatSheet
+│   ├── compliance/     ComplianceScreen · AddDocumentSheet · AddCertificationSheet
+│   ├── expenses/       SubmitExpenseWizard · ExpenseStatusList
+│   ├── home/           HomeCards (company, compliance, time-tracking…)
+│   ├── notifications/  NotificationsList
+│   ├── trip-sheets/    TripSheetStatus · SubmitTripSheetForm
+│   ├── trips/          TripsView · TripCard · TripDetailView · TripStopRow
+│   │                   TripMap · TripMapLeaflet · StopActions
+│   └── ui/             Icon · BottomSheet · StatusBadge · PillTabs
+│                       ScreenPlaceholder · form/
 │
 ├── lib/
 │   ├── constants.ts    APP_NAME, NAV_ITEMS, DETAIL_TITLES
-│   ├── format.ts       Date formatting helpers
-│   ├── data/           Mock backend (seed data TS files)
-│   └── api/            Service layer (screens call this only)
+│   ├── format.ts       formatDate(), formatNow()
+│   ├── data/           Mock backend (typed seed data)
+│   └── api/            Service layer (screens call only this)
 │
-├── docs/               This Obsidian vault
-└── prompts/            Agent prompts
+├── docs/               Obsidian vault (this folder)
+├── prompts/            Per-agent prompts (mirrored from docs/agents/)
+└── scripts/
+    └── mobile-preview.mjs   Playwright screenshot automation
 ```
 
 ---
 
-## The Mobile Shell
-
-Screens in the `(app)/` route group render inside `AppShell`:
+## Mobile Shell
 
 ```
-┌─────────────────────────┐  ← max-w-shell (440px), centered on page
-│ TopBar   (translucent)  │  ← position:absolute, bg-surface/80, blur
-│·························│
-│ <main>   scrollable     │  ← h-dvh, overflow-y-auto, padded top+bottom
-│   screen content here   │
-│·························│
-│ BottomNav (translucent) │  ← position:absolute, floating pill, blur
-└─────────────────────────┘
+┌──────────────────────────────┐  max-w-shell (440px), centered
+│ TopBar  (bg-surface/80 blur) │  position:absolute
+├──────────────────────────────┤
+│ <main>   h-dvh overflow-auto │  padded: pt-safe-top + pb-nav-bottom
+│   screen content             │  never body-scroll
+├──────────────────────────────┤
+│ BottomNav (floating pill)    │  position:absolute, bg-surface/80 blur
+└──────────────────────────────┘
 ```
 
-**Key facts:**
-- `.app-shell` is `h-dvh` — the page never body-scrolls, only `<main>` scrolls
-- TopBar and BottomNav are `absolute` overlays — content scrolls *under* them
-- `<main>` has `pt-safe-top` + `pb-nav-bottom` padding so content clears them
-- Screens **only** provide `<main>` content — never their own TopBar/BottomNav
-
-**Routes WITHOUT the shell:**  
-`/auth/*` · `/expenses/*` · `/trip-sheets/*` · `/notifications` · `/chat/*`  
-These live outside `(app)/` and provide their own full-screen layout.
+Routes **outside** `(app)/` have no shell:  
+`/auth/*` · `/expenses/*` · `/trip-sheets/*` · `/notifications` · `/chat/*`
 
 ---
 
 ## Rendering Rules
 
 ```
-Server Component (default)
-  → lib/api/<resource>.ts      (typed, async)
-    → lib/data/<resource>.ts   (mock fixture) OR real API
-  ← typed model (docs/05-data-model.md)
-  → props passed to client component for interactivity
+Server Component (default, page.tsx)
+  → lib/api/<resource>.ts     (typed, async)
+    → lib/data/<resource>.ts  (mock fixture)
+  ← typed model → props → Client Component
 ```
 
-Add `"use client"` **only** for:
-- Navigation hooks (`usePathname`, `useRouter`)
-- Forms and controlled inputs
-- Stateful widgets (toggles, expanders, bottom sheets)
-- The Leaflet map (`next/dynamic`, `ssr: false`)
+**Add `"use client"` only for:**
+- `usePathname`, `useRouter`, `useSearchParams`
+- `useState`, `useEffect`, `useRef`
+- Event handlers (onClick, onChange, onSubmit)
+- Canvas / pointer events (`StopActions` → `SignaturePad`)
+- `next/dynamic` (Leaflet map, `ssr: false`)
 
 ---
 
-## Data Layer Architecture
+## Data Layer
 
 > [!important] The Two-Layer Rule
-> Screens import from `lib/api/*` only. Never from `lib/data/*`.
+> Screens import from `lib/api/*` only. Never `lib/data/*` in screens or components.
 
 ```
 screens/page.tsx
-  ↓ calls
-lib/api/trips.ts         ← service layer (typed, async functions)
-  ↓ reads from
-lib/data/trips.ts        ← mock backend (static seed data)
-  ↓ (later replaced by)
-Real TrackSmart API      ← same lib/api interface, no screen changes
+  ↓
+lib/api/<resource>.ts    ← typed async service layer
+  ↓
+lib/data/<resource>.ts   ← mock seed data (→ real API later)
 ```
 
-**Why this indirection?**  
-The Flutter app has an identical `Repository` layer. Screen logic stays portable because neither the Next.js pages nor the Flutter widgets depend on the data source.
+### Mock Data Modules
 
-### Mock data modules
-
-| Module | Purpose |
+| Module | Exports |
 |--------|---------|
-| `lib/data/trips.ts` | Trip, stop, load fixtures |
-| `lib/data/bulletin.ts` | Load tender feed |
-| `lib/data/chats.ts` | Conversations + messages |
-| `lib/data/contacts.ts` | Driver/carrier contacts |
-| `lib/data/schedule.ts` | Shifts + clock records |
-| `lib/data/calendar-events.ts` | Calendar events |
-| `lib/data/profile.ts` | Driver profile |
-| `lib/data/compliance.ts` | Compliance documents |
-| `lib/data/expenses.ts` | Submitted expenses |
-| `lib/data/trip-sheets.ts` | Trip sheets |
-| `lib/data/notifications.ts` | Notification feed |
+| `lib/data/trips.ts` | `Trip`, `TripStop`, fixtures |
+| `lib/data/bulletin.ts` | `LoadTender` fixtures |
+| `lib/data/chats.ts` | `Conversation`, `Message` |
+| `lib/data/contacts.ts` | `Contact` |
+| `lib/data/schedule.ts` | `Shift`, `ClockRecord` |
+| `lib/data/calendar-events.ts` | `CalendarEvent` |
+| `lib/data/profile.ts` | `DriverProfile` |
+| `lib/data/compliance.ts` | `ComplianceData` |
+| `lib/data/expenses.ts` | `ExpenseRecord`, `ExpenseType` |
+| `lib/data/trip-sheets.ts` | `TripSheet` |
+| `lib/data/notifications.ts` | `Notification` |
 | `lib/data/users.ts` | Demo login users |
-| `lib/data/company.ts` | Carrier/company info |
+| `lib/data/company.ts` | Carrier info |
+| `lib/data/home.ts` | Home aggregate |
 
 ---
 
-## Map Integration
+## Key Components Deep-Dive
+
+### `PillTabs` (`components/ui/PillTabs.tsx`)
+Shared rounded-bubble tab bar. Used by `TripsView` and `ExpenseStatusList`.
+- Track: `bg-surface-muted rounded-full shadow-inner p-1`
+- Active: `bg-brand text-white shadow-nav rounded-full`
+- Inactive: `text-ink-muted`
+- Props: `tabs: PillTab[]`, `active: string`, `onChange: (key) => void`
+
+### `TripsView` (`components/trips/TripsView.tsx`)
+Client component — holds `tab` state (`current | upcoming | previous`).  
+Renders `<PillTabs>` + conditionally renders `<TripCard>` lists per tab.
+
+### `ExpenseStatusList` (`components/expenses/ExpenseStatusList.tsx`)
+Client component — holds `tab` (`payroll | company`) + `query` state.  
+Renders `<PillTabs>` + search input + filtered `ExpenseRecord` list.
+
+### `StopActions` (`components/trips/StopActions.tsx`)
+Client component — full stop workflow state machine.
+- `dialog` state: `null | "trailer" | "temp" | "odometer" | "signature" | "document"`
+- `history` state: completed action entries with timestamp
+- `pending` state: label being confirmed through dialog chain
+- Dialog chain per stop kind (see [[02-screens]] §Trip Detail)
+
+### `SignaturePad` (inside `StopActions.tsx`)
+Canvas draw-to-sign. Uses `useRef` for canvas + `onPointerDown/Move/Up/Leave`. `clearRef` exposed to parent dialog so the Clear button works without lifting state.
+
+### `TripMapLeaflet` (`components/trips/TripMapLeaflet.tsx`)
+Loaded via `next/dynamic({ ssr: false })`. `react-leaflet` + OpenStreetMap tiles. Brand polyline + numbered red pins. Non-interactive thumbnail in `TripCard`; full interactive map in `TripDetailView`.
+
+---
+
+## Map Integration Chain
 
 ```
 TripCard / TripDetailView
-  → TripMap (client component, "use client")
+  → TripMap (client, "use client")
     → next/dynamic(() => TripMapLeaflet, { ssr: false })
-      → react-leaflet
-        → Leaflet + OpenStreetMap tiles (no API key)
+      → FlutterMap (react-leaflet)
+        → TileLayer (OpenStreetMap, no API key)
+        → PolylineLayer (brand blue)
+        → MarkerLayer (numbered pins)
 ```
-
-- Preview map embedded in trip cards (non-interactive thumbnail)
-- Tapping preview opens full-screen interactive map
-- Brand-coloured polyline through stop coordinates
-- Numbered red pins at each stop
-
----
-
-## Environment Variables
-
-See `.env.example` — copy to `.env.local`.
-
-The mock data layer needs no configuration. Variables matter only when connecting the real API.
 
 ---
 
 ## 🔗 Related
 
-[[00-home]] · [[01-design]] · [[02-screens]] · [[05-data-model]] · [[06-roadmap]]
+[[00-home]] · [[01-design]] · [[02-screens]] · [[03-design-system]] · [[05-data-model]] · [[06-roadmap]]

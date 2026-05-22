@@ -4,595 +4,461 @@ type: prompt
 agent: flutter
 status: living-document
 tags: [prompt, flutter, transition]
+updated: 2026-05-22
 ---
 
-# Flutter mirror spec — TrackSmart Mobile
+# Flutter Mirror Spec — TrackSmart Mobile
 
 > [!abstract] What this file is
-> A **living document**. It is the build plan for the Stage-2 **Flutter**
-> app. Every time a screen is implemented in Next.js, its Flutter equivalent
-> is described here in the same change (the **dual-output rule** —
-> [[shared-context]] §3). When Stage 2 begins, this file is already a
-> complete, screen-by-screen Flutter spec.
+> A **living build plan** for the Stage-2 Flutter native app. Every time a screen is implemented in Next.js, its Flutter equivalent is described here in the same change (the **dual-output rule** — [[shared-context]] §3). When Stage 2 begins, this file is already a complete, screen-by-screen Flutter spec.
 
 > [!important] How to use this file
-> - **Implementing in Next.js?** After the screen works, add/update its
->   section under *Screen mirrors* below.
-> - **Building the Flutter app?** Implement screens top to bottom from the
->   *Screen mirrors* sections; this file plus [[data-model]] and
->   [[design-system]] is all you need.
+> - **Implementing in Next.js?** After the screen works, add/update its section below.
+> - **Building Flutter?** Implement screens top-to-bottom from the Screen mirrors section.
+> - **Obsidian copy:** `docs/agents/05-flutter-mirror.md` (same content, kept in sync)
 
 ---
 
-## 1. Recommended Flutter stack
+## 1. Flutter Stack
 
 | Concern | Choice | Mirrors (Next.js) |
 |---------|--------|-------------------|
 | Framework | Flutter 3.x / Dart 3.x | Next.js 15 |
-| Routing | `go_router` | App Router |
-| State / data | `flutter_riverpod` | Server Components + `lib/` |
-| HTTP | `dio` or `http` | `fetch` in `lib/api/*` |
+| Routing | `go_router ^14` | App Router |
+| State / data | `flutter_riverpod ^2.5` | Server Components + useState |
+| Maps | `flutter_map ^7` + OSM | `react-leaflet` + OSM |
 | Theming | `ThemeData` + `ColorScheme` | `tailwind.config.ts` |
 | Icons | `Icons.*` (Material) | `components/ui/Icon.tsx` |
-| Maps | `google_maps_flutter` | `TripMap` (SVG prototype) |
-
-> The stack is a recommendation; if changed, change it here so all agents
-> stay aligned.
-
-## 2. Suggested Flutter folder layout
-
-```
-lib/
-  main.dart            App entry, ProviderScope, MaterialApp.router
-  app/
-    router.dart        go_router config — mirrors app/ routes
-    theme.dart         ThemeData built from the design tokens
-  shell/
-    app_shell.dart     Scaffold + BottomNavigationBar — mirrors AppShell
-    top_bar.dart       AppBar — mirrors TopBar
-  screens/
-    home_screen.dart
-    trips_screen.dart
-    bulletin_screen.dart
-    calendar_screen.dart
-    chats_screen.dart
-    account_screen.dart
-  widgets/             Reusable widgets — mirrors components/ui/*
-  models/              Dart classes — mirrors docs/data-model.md
-  data/                Repositories — mirrors lib/api/*
-```
-
-## 3. Concept mapping (Next.js → Flutter)
-
-| Next.js | Flutter |
-|---------|---------|
-| App Router route folder | `GoRoute` in `router.dart` |
-| `app/layout.tsx` | `MaterialApp.router` + `app_shell.dart` |
-| `AppShell` | `Scaffold` with `bottomNavigationBar` |
-| `TopBar` | `AppBar` |
-| `BottomNav` | `BottomNavigationBar` / `NavigationBar` |
-| React Server Component (data fetch) | `ConsumerWidget` + `FutureProvider` / `Repository` |
-| `"use client"` interactive component | `StatefulWidget` / `ConsumerStatefulWidget` |
-| `components/ui/*` | widgets in `lib/widgets/` |
-| `BottomSheet` (modal) | `showModalBottomSheet` (isScrollControlled) |
-| Tailwind utility classes | `ThemeData` + explicit `EdgeInsets` / `TextStyle` |
-| `next/link` `<Link>` | `context.go()` / `context.push()` |
-| `usePathname()` | `GoRouterState.of(context).uri` |
-| TS types (`lib/types.ts`) | Dart model classes (`lib/models/`) |
-| `loading.tsx` / loading state | `AsyncValue.loading` → spinner |
-| `not-found.tsx` | `errorBuilder` in `go_router` |
-
-## 4. Design-token mapping
-
-Tokens from `tailwind.config.ts` ([[design-system]]) become `theme.dart`:
-
-```dart
-// lib/app/theme.dart  — keep values identical to tailwind.config.ts
-const brand       = Color(0xFF1D4ED8);
-const brandDark   = Color(0xFF1E3A8A);
-const brandLight  = Color(0xFFDBEAFE);
-const success     = Color(0xFF15803D);
-const warning     = Color(0xFFB45309);
-const danger      = Color(0xFFB91C1C);
-const surface     = Color(0xFFFFFFFF);
-const surfaceMuted= Color(0xFFF4F5F7);
-const ink         = Color(0xFF0F172A);
-const inkMuted    = Color(0xFF64748B);
-
-// Sizing
-const shellMaxWidth = 440.0;   // max-w-shell — iPhone 16 Pro Max width
-const topBarHeight  = 56.0;    // h-topbar
-const bottomNavH    = 64.0;    // h-bottomnav
-const cardRadius    = 14.0;    // rounded-card
-```
-
-Status → colour mapping is identical to the table in [[design-system]].
-
-## 5. Shell mirror  ✅ (Next.js scaffold done)
-
-**Next.js:** `components/shell/AppShell.tsx`, `TopBar.tsx`, `BottomNav.tsx`.
-The shell is applied via the `app/(app)/` route group; `app/auth/*` routes
-render outside it (no TopBar / BottomNav).
-
-**Flutter:**
-
-- `app_shell.dart` — a `Scaffold`:
-  - `appBar`: a **translucent** bar (≈80%-opacity surface + blur) that
-    overlays the scrolling body — same treatment as the bottom bubble. On
-    a tab route it shows the section title + a notification `IconButton`
-    (`Icons.notifications_outlined`) with a small red unread dot plus an
-    account `IconButton` (`Icons.person_outline`) that opens the **My
-    Account** end drawer (`Scaffold.endDrawer`, see the Account mirror);
-    on a detail route (e.g. `/compliance`) a back button
-    (`Icons.chevron_left` → `context.pop()`) + a centered title.
-  - `body`: a `Center` → `ConstrainedBox(maxWidth: 440)` → the screen, so
-    the phone-frame look matches on large screens.
-  - **Bottom nav**: a translucent floating **bubble** that overlays the
-    body — NOT the stock `NavigationBar`. Put it in a `Stack` above the
-    scrolling content, `Positioned` at the bottom; the pill is a
-    `Container` (`BorderRadius.circular(999)`, soft shadow) over a
-    `BackdropFilter` blur, filled with a ~80%-opacity surface colour so
-    content shows through as it scrolls under. Tabs from `NAV_ITEMS`.
-- Nav items (keep in sync with `NAV_ITEMS`):
-  | href | label | Flutter icon |
-  |------|-------|--------------|
-  | `/home` | Home | `Icons.home_outlined` |
-  | `/trips` | Trips | `Icons.alt_route` |
-  | `/bulletin` | Bulletin | `Icons.campaign_outlined` |
-  | `/calendar` | Schedule | `Icons.calendar_today_outlined` |
-  | `/chats` | Chats | `Icons.chat_bubble_outline` |
-
-  (Account is reached from the top bar, not a bottom-nav tab.)
-- Active tab: the icon sits in a circular `Container` tinted `brandLight`
-  with a `brand` icon + label; inactive tabs use `inkMuted`.
-- Respect safe areas with `SafeArea`.
-- In `router.dart`, the four tabs live inside a
-  `StatefulShellRoute.indexedStack` (or `ShellRoute`). Routes that must NOT
-  show the shell — e.g. `/auth/sign-in` — are declared as top-level routes
-  outside that shell route. The root path `/` is a top-level `GoRoute` with
-  a `redirect` to `/auth/sign-in` (mirrors `app/page.tsx`).
-
-## 6. Screen mirrors
-
-> Each section is filled when the matching Next.js screen is implemented.
-> Status mirrors [[screens]].
-
-### Sign in — `/auth/sign-in` → `GoRoute('/auth/sign-in')`  · done
-- **Next.js:** `app/auth/sign-in/page.tsx` (brand block + footer),
-  `components/auth/SignInForm.tsx` (`"use client"` card),
-  `app/auth/layout.tsx` (no-shell layout).
-- **Backend mock:** `lib/data/users.ts` — demo users + `DEMO_PASSWORD`.
-- **Service layer:** `lib/api/auth.ts` — `signIn(email, password)` and
-  `listDemoUsers()`. The screen never touches `lib/data` directly.
-- **Flutter widget:** `screens/sign_in_screen.dart`, a
-  `ConsumerStatefulWidget` (holds form state). Declared OUTSIDE the
-  `StatefulShellRoute` so it has no bottom nav.
-- **Widget tree:** `Scaffold` → `SafeArea` → `Center` →
-  `ConstrainedBox(maxWidth: 440)` → `SingleChildScrollView` → `Column`:
-  - brand: dark `Container` (`borderRadius: 16`) with
-    `Icon(Icons.local_shipping, color: white)` → `Text(APP_NAME)` →
-    `Text(tagline)`.
-  - `Card` (radius 16, border): header `Text`s, then body `Column`:
-    - quick demo: `DropdownButtonFormField<DemoUser>`.
-    - "OR": `Row` of two `Divider`s + `Text`.
-    - email: `TextFormField` (`prefixIcon: Icons.mail_outline`).
-    - password: `TextFormField` (`prefixIcon: Icons.lock_outline`,
-      `suffixIcon` toggles `obscureText`).
-    - demo-password hint `Text` with a monospace chip.
-    - `FilledButton` (dark `ink`) with `Icons.login`.
-  - footer `Text`.
-- **Backend mirror (Dart):** `lib/data/demo_users.dart` (list +
-  `kDemoPassword`) and `lib/data/auth_repository.dart`
-  (`Future<SignInResult> signIn(...)`, `List<DemoUser> listDemoUsers()`).
-  Keep the same frontend ⇄ service ⇄ data split.
-- **State handling:** loading → button spinner + disabled fields;
-  error → red helper text in the card; success → `context.go('/')`.
-- **Behaviour to replicate:** picking a demo user autofills email +
-  password; editing email/password manually clears the demo-user dropdown
-  (the form must never show a demo user whose credentials no longer match);
-  eye icon toggles password visibility; no real auth.
-- **Tokens:** dark logo/button use `ink` (#0F172A); the "Quick demo login"
-  label uses `brand`.
-
-### Home — `/home` → `GoRoute('/home')`  · in progress
-- **Next.js:** `app/(app)/home/page.tsx` — an async Server Component that
-  awaits `getCompany()` + `getCompliance()` and renders two cards.
-- **Note:** after sign-in, `SignInForm` routes here (`context.go('/home')`).
-- **Backend mock:** `lib/data/company.ts`, `lib/data/compliance.ts`.
-- **Service layer:** `lib/api/home.ts` — `getCompany()`, `getCompliance()`.
-- **Flutter widget:** `home_screen.dart`, a `ConsumerWidget`. Data via a
-  `homeProvider` (`FutureProvider`) over a `HomeRepository` mirroring
-  `lib/api/home.ts`.
-- **Models (Dart):** `Company`, `Compliance` in `lib/models/` — same field
-  names as `lib/data/company.ts` / `compliance.ts`.
-- **Components done — mirror as widgets in `lib/widgets/`:**
-  - `CompanyCard` → `company_card.dart`: a `Card` (radius 14) → centered
-    `Column`: `Text(company.name, bold)` + a rounded monogram tile
-    (`Container`, `brandLight` bg, `Text(monogram)`). Placeholder for a
-    real logo `Image`.
-  - `ComplianceCard` → `compliance_card.dart`: a `Card` wrapped in an
-    `InkWell` → `context.push('/compliance')`:
-    - header `Row`: `Text("My Compliance")` + `Icon(Icons.chevron_right)`.
-    - body `Row`: square initials avatar (`Container`, `surfaceMuted`) +
-      a `Column` of labelled fields — Name; a `Row` of License No + Items;
-      Expiry. Field = tiny uppercase `inkMuted` label over a bold value.
-    - `Divider`, then a status line: `Icon(Icons.check)` + "All documents
-      valid" in `success`, else a `warning` message.
-- **Behaviour:** `expiryDate` is stored ISO (`YYYY-MM-DD`) and formatted
-  for display as `NOV 17, 2026`.
-- **Dashboard cards (done) — mirror as widgets:**
-  - `ActionCard` → `action_card.dart`: title + two buttons — a primary
-    `FilledButton.icon` (blue `brand`) and a secondary
-    `OutlinedButton.icon`. Used for Expenses, Maintenance Requests and
-    Trip Sheets. Placeholders until their form / list screens exist.
-  - `LinkCard` → `link_card.dart`: title + `Icons.chevron_right` + a
-    one-line summary. Used for Payroll; the list comes from
-    `getPayrolls()` (`lib/api/home.ts`, mock `lib/data/home.ts`).
-  - `TimeTrackingCard` → `time_tracking_card.dart`: a `StatefulWidget` —
-    a compact, fixed-height card: title + status line on the left, a
-    `Switch` on the right. While clocked in a small elapsed timer
-    (HH:MM:SS, `success` green, `Timer.periodic`) appears inline beside
-    the switch and the status line shows the clock-in time.
-  - `HomeMenu` → `home_menu.dart`: Refresh + Help as two side-by-side
-    buttons, then a full-width Logout button with a **red outline**.
-    Refresh reloads the page; Logout shows a confirm dialog ("Do you
-    want to log out?") then `context.go('/auth/sign-in')`.
-- **Still scaffold (planned):** active-trip card, quick stats, bulletin
-  highlights, role-aware shortcuts.
-
-### My Compliance — `/compliance` → `GoRoute('/compliance')`  · done
-- **Opened from:** the Home `ComplianceCard` (tap).
-- **Next.js:** `app/(app)/compliance/page.tsx` — async Server Component
-  that awaits `getCompliance()`. Not a tab → the TopBar shows the back
-  button + "My Compliance".
-- **Service:** `lib/api/compliance.ts` `getCompliance()` (full profile);
-  backend mock `lib/data/compliance.ts`.
-- **Flutter widget:** `compliance_screen.dart`, a `ConsumerWidget`. A
-  top-level pushed `GoRoute` (keeps the shell, AppBar in detail mode).
-- **Layout:** three labelled sections — "Basic", "Documents",
-  "Certifications".
-  - Basic → three `ComplianceItemCard` (`compliance_item_card.dart`):
-    Driver's License, Passport, Emergency Contact. Each = a `Card` with a
-    title, label→value rows, an "Update" button, and an optional status
-    line (`Icons.check` + `success` text, e.g. "181 days until expiry").
-  - Documents → header `Row` with a blue "Add" button, then the list or
-    a "No documents" empty card.
-  - Certifications → same pattern, "No certifications" empty card.
-- **Bottom sheets** (mirror with `showModalBottomSheet` — see §5):
-  - **Update &lt;item&gt;** — opened by a card's "Update" button. Header
-    (`Update Driver's License` + close) → item name in `brand` → a form
-    prefilled with current values → "Submit for Review". Fields differ
-    per item; the Next.js side is config-driven (`SheetFieldConfig[]`).
-  - **Add Document** — opened by Documents "Add". Centered title + two
-    square tiles (Scan Document / Take Photo) + two rows (Upload from
-    Files / Select from Gallery) + Cancel. Capture actions are
-    placeholders — in Flutter use `image_picker` / `file_picker`.
-  - **Add New Certification** — opened by Certifications "Add". Form:
-    name, Category toggle (Drug Test / Road Test), Result toggle
-    (Pass / Fail), Expiry Date, a "+ Upload Document" field (opens the
-    Add Document capture sheet — shows "Document attached" once done), Note,
-    "Submit for Review".
-- **Form fields** mirror `components/ui/form.tsx`: text / select / date /
-  textarea / two-option toggle / submit. Primary buttons are **blue**
-  (`brand`), not green.
-- **Models (Dart):** `Compliance` with `LicenseInfo`, `PassportInfo`,
-  `EmergencyContact`, `ComplianceDocument`, `Certification` — same fields
-  as `lib/data/compliance.ts`.
-- **Behaviour:** empty values render as "N/A" ("Not set" for the contact
-  name); expiry status is computed from the ISO date (`daysUntil`).
-  "Submit for Review" is a mock — it just closes the sheet (no backend).
-
-### Submit Expense — `/expenses/new` → `GoRoute('/expenses/new')`  · done
-- **Opened from:** Home → Expenses → "Submit New".
-- **Next.js:** `app/expenses/new/page.tsx` + `app/expenses/layout.tsx`
-  (no app shell); the wizard is `components/expenses/SubmitExpenseWizard`.
-- **Flutter widget:** `submit_expense_screen.dart` — a `StatefulWidget`
-  holding one `ExpenseDraft` and a step index. A top-level full-screen
-  `GoRoute` (no shell).
-- **Layout:** custom header (back `Icons.chevron_left` + "Submit Expense"
-  + "step/5"), a scrollable step body, and a **translucent floating
-  footer** (same blur treatment as the bottom nav) with a step-dependent
-  pill button.
-- **Steps (5):**
-  1. `StepExpenseType` — two cards (Payroll Addition / Company Paid);
-     both run the same flow.
-  2. `StepAddReceipt` — a blue "AI" hint banner + four capture rows
-     (Scan / Photo / Gallery / Files) + a "Skip" footer button. Capture
-     is a placeholder — use `image_picker` / `file_picker` natively.
-  3. `StepExpenseDetails` — controlled form grouped into two `Card`s
-     (details + vendor info): amount + USD/CAD segmented toggle,
-     description + quick chips, notes, optional vendor info (name,
-     invoice #, date, address, city, state, USA/Canada/Mexico toggle).
-     Inputs are filled grey (`surface-muted`).
-  4. `StepExpenseCategory` — pick a category (Truck / Trailer / General
-     expense) + an optional "Select Truck" search field.
-  5. `StepReview` — a read-only recap of everything entered, grouped into
-     cards (Expense / Vendor Info) like the form; the footer button is
-     "Submit for Review".
-- **State:** the wizard owns one `ExpenseDraft` (mirror it from
-  `lib/api/expenses.ts`); steps read it and patch via an `update` callback.
-- **Submit:** mock `submitExpense()` then `context.go('/home')`. Both
-  expense types use this flow. Buttons are blue (`brand`).
-
-### Expense Status — `/expenses` → `GoRoute('/expenses')`  · done
-- **Opened from:** Home → Expenses → "Status".
-- **Next.js:** `app/expenses/page.tsx` → `ExpenseStatusList`. Full-screen,
-  no app shell; own header (back + "Expense Status").
-- **Service:** `getExpenses()` in `lib/api/expenses.ts`; mock records in
-  `lib/data/expenses.ts`.
-- **Flutter widget:** `expense_status_screen.dart`, a `ConsumerWidget`.
-- **Layout:** header + a `ListView` of expense cards — each shows the
-  description, a status badge (Pending = `warning`, Approved = `success`,
-  Rejected = `danger`), amount + submitted date. Empty state when none.
-
-### Submit Trip Sheet — `/trip-sheets/new` → `GoRoute('/trip-sheets/new')`  · done
-- **Opened from:** Home → Trip Sheets → "Submit New".
-- **Next.js:** `app/trip-sheets/new/page.tsx` → `SubmitTripSheetForm`.
-  Full-screen, no app shell.
-- **Flutter widget:** `submit_trip_sheet_screen.dart`, a `StatefulWidget`.
-- **Layout:** header (back + "Submit Trip Sheet"), scrollable body — a
-  decorative trip-sheet preview card, an "Upload Trip Sheet" 4-tile grid
-  (Scan / Camera / Gallery / Files — capture is a placeholder), a Period
-  (start/end date) row, an optional Note — and a translucent floating
-  footer with "Submit Trip Sheet" (disabled until a sheet is attached).
-- **Submit:** mock `submitTripSheet()` then `context.go('/trip-sheets')`.
-
-### Trip Sheet Status — `/trip-sheets` → `GoRoute('/trip-sheets')`  · done
-- **Opened from:** Home → Trip Sheets → "Status".
-- **Next.js:** `app/trip-sheets/page.tsx` → `TripSheetStatusList`.
-- **Service:** `getTripSheets()` (`lib/api/trip-sheets.ts`, mock
-  `lib/data/trip-sheets.ts`).
-- **Flutter widget:** `trip_sheet_status_screen.dart` — a `ListView` of
-  cards: period range, a `StatusBadge`, submitted date. `StatusBadge`
-  (`components/ui/StatusBadge.tsx`) is shared with the expense list.
-
-### Trips — `/trips` → `GoRoute('/trips')`  · done
-- **Next.js:** `app/(app)/trips/page.tsx` → `TripsView`.
-- **Service:** `getTrips()` (`lib/api/trips.ts`, mock `lib/data/trips.ts`).
-- **Models (Dart):** `Trip` and `TripStop` (`lib/models/trip.dart`) with a
-  `TripStopKind` enum (acquire / hook / pickup / drop-off) — same fields
-  as `lib/data/trips.ts` (rich: origin/destination, date window,
-  countdown, equipment, power unit, trailer, note; stops carry name,
-  address, lat/lng, appointment, pickup number, temperature, phone, note).
-- **Flutter widget:** `trips_screen.dart` — a **Current / Upcoming /
-  Previous** tab bar (`TabBar` / segmented control); the selected tab
-  lists its **`TripCard`**s (empty state when none).
-- **`TripCard`** — a tappable summary card (`InkWell` → `context.push`
-  `/trips/<id>`): trip id + a status pill (In Progress = `brand` /
-  countdown = `warning` / Completed = `success`), the route
-  (origin → destination), the date window, a meta row (stop count, power
-  unit, equipment + trailer) and a "View trip" footer. Only the
-  **current** trip's card embeds a **`TripMap`**; upcoming / previous
-  cards are map-free (their map is on the trip detail page).
-- **`TripMap`** — a **real interactive map**. The Next.js build uses
-  **Leaflet + OpenStreetMap** tiles (`react-leaflet`, loaded client-only
-  via `next/dynamic` `ssr:false`), a `brand` route polyline through the
-  stop coordinates and numbered red `divIcon` pins. The embedded map is a
-  preview; **tapping it opens a full-screen interactive map** (pan/zoom,
-  numbered-pin popups). In Flutter use `google_maps_flutter` (or
-  `flutter_map` for OSM tiles): a `Polyline` through the `TripStop`
-  lat/lng with numbered `Marker`s, fixed height (~176) for the preview,
-  camera fit to the route bounds, and a full-screen map route on tap.
-
-### Trip detail — `/trips/[id]` → `GoRoute('/trips/:id')`  · done
-- **Opened from:** tapping any `TripCard`.
-- **Next.js:** `app/(app)/trips/[id]/page.tsx` — async Server Component
-  awaiting `getTrip(id)` (returns the trip + its variant); `notFound()`
-  when missing.
-- **Flutter widget:** `trip_detail_screen.dart`, a `ConsumerWidget`. A
-  detail route — AppBar back button + "Trip &lt;id&gt;".
-- **`TripDetailView`** —
-  - **`TripOverviewCard`** — the trip summary, the route map and an
-    **expandable Trip Details** section (a `warning`-tinted Dispatch
-    Note + equipment, power unit, trailer, drivers, dispatcher,
-    issued-on), all in one card; an `ExpansionTile` or a tap-toggled
-    section reveals it.
-  - a **Trip Progress** strip (`LinearProgressIndicator`, `success`);
-  - a **Submit** card (`TripSubmitCard` — opens a `showModalBottomSheet`
-    to submit documents, notes & photos);
-  - an **Expense** row → `/expenses/new`;
-  - the stop timeline;
-  - a **Report an Issue** row → `/maintenance/new`.
-- **`TripStopRow`** — a timeline row with three states driven by the
-  first not-yet-completed stop:
-  - **done** — green check node, white card, "Done" badge.
-  - **next** — brand-numbered node, `brandLight` card with a `brand`
-    ring and a "Next" badge.
-  - **upcoming** — grey-numbered node, muted card.
-  The rail node shows the stop number; the connector is `success` for
-  completed segments. Expands to the stop detail + `StopActions`:
-  **Acquire / Hook** are yard stops — only equipment chips + the action.
-  **Pick Up / Drop Off** also show the `warning`-tinted per-stop note
-  ("Pickup Note" / "Drop Off Note"), the address (tap → opens Google
-  Maps), appointment, pickup/drop-off number, temperature, phone, email.
-- **`StopActions`** — status buttons inside the expanded stop block; the
-  dialogs are **bottom sheets** (`showModalBottomSheet`):
-  - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived opens an
-    odometer sheet (the value is kept); Picked Up runs confirm-trailer →
-    confirm-temperature → document upload (the document can be
-    **skipped**); Departed completes directly.
-  - **Drop Off** → **Arrived / Delivered**. Arrived opens an odometer
-    sheet; Delivered runs a **receiver e-signature** pad → POD document
-    upload (skippable; the Add Document capture sheet).
-  - **Acquire** → **Mark as Completed** → odometer sheet.
-  - **Hook** → **Mark as Completed** → confirm-trailer sheet.
-  The e-signature is a draw-to-sign `CustomPaint` / `signature` pad.
-  Completed actions append to an **Action History** list (label +
-  timestamp; Arrived / Acquire also keep the odometer value) shown under
-  the buttons. **Pick Up** and **Drop Off** stops also show a
-  **Navigate** button that opens directions to the stop. All mocks.
-- Loads are nested under a trip, not a top-level screen.
-
-### Bulletin — `/bulletin` → `GoRoute('/bulletin')`  · done
-- **Next.js:** `app/(app)/bulletin/page.tsx` → `BulletinList`.
-- **Service:** `getLoadTenders()` (`lib/api/bulletin.ts`, mock
-  `lib/data/bulletin.ts`).
-- **Flutter widget:** `bulletin_screen.dart` — a search `TextField` + a
-  `ListView` of `BulletinCard`s.
-- **`BulletinCard`** (`bulletin_card.dart`, `StatefulWidget`): a
-  light-blue card — sender row (avatar, name, time, unread dot), "Load
-  Tender" + route summary, and **Accept / Decline** buttons.
-  Accepting/declining collapses it to a status badge + an expand
-  chevron; expanding shows the full load detail (from, to, date,
-  pickup, delivery). Local state (mock).
-
-### Schedule — `/calendar` → `GoRoute('/calendar')`  · done
-- The bottom-nav tab is labelled **Schedule**; the route path stays
-  `/calendar`.
-- **Next.js:** `app/(app)/calendar/page.tsx` → `CalendarScreen`.
-- **Service:** `getUpcomingEvents()` (`lib/api/bulletin.ts`);
-  `getWorkingDates()`, `getShifts()`, `getClockRecords()`
-  (`lib/api/schedule.ts`, mock `lib/data/schedule.ts`); `getCalendarEvents()`
-  (`lib/api/calendar.ts`, mock `lib/data/calendar-events.ts`).
-- **Models (Dart):** `Shift`, `ClockRecord` (`lib/models/schedule.dart`)
-  and `CalendarEvent` with a `CalendarEventKind` enum (delivery / pickup /
-  meeting / maintenance / reminder) — same fields as the data files.
-- **Flutter widget:** `calendar_screen.dart` — a Calendar / List
-  segmented toggle:
-  - **Calendar** (`CalendarView`, a `StatefulWidget`): a header `Row` with
-    prev/next `IconButton`s + the month label, then a month `GridView`
-    (7 columns). Each day cell shows the date and up to three dots —
-    working day (`success`), scheduled event(s) (`brand`), a clock record
-    (`warning`). Today is ringed `brand`, the selected day ringed `ink`.
-    A three-item legend sits under the grid. The calendar is read-only.
-  - Below the grid, the selected day shows three labelled blocks —
-    **Events** (coloured-accent cards per `CalendarEventKind`), **Shifts**
-    (label, time range, location) and **Timesheet** (clock in / clock out
-    / hours; "On the clock" + "In progress" while the record is open) —
-    each with an empty-state card.
-  - **List** (`CalendarEventsList`): a date-grouped **agenda** `ListView`
-    that merges shifts, calendar events and load tenders into one stream.
-    Each row is an icon chip + title + subtitle + kind tag; each date
-    section has a heading with a "Today" badge.
-
-### Chats — `/chats` → `GoRoute('/chats')`  · done
-- **Next.js:** `app/(app)/chats/page.tsx` → `ChatsList`.
-- **Service:** `getConversations()` / `getConversation(id)`
-  (`lib/api/chats.ts`, mock `lib/data/chats.ts`); `getContacts()`
-  (`lib/api/contacts.ts`, mock `lib/data/contacts.ts`).
-- **Model (Dart):** `Contact` (`lib/models/contact.dart`) — id, name,
-  role, initials.
-- **Flutter widget:** `chats_screen.dart` — search + a `ListView` of
-  conversation rows (avatar, name, last message, time, unread dot) + a
-  "New chat" button.
-- Tapping a row pushes the thread.
-- **New chat** → `NewChatSheet` (`showModalBottomSheet`): a "New Chat"
-  title, a search field and a contact `ListView` (monogram avatar, name,
-  role). Picking a contact closes the sheet then `context.push` →
-  `/chat/<id>`. `getConversation` falls back to the contact so the
-  thread opens even with no prior messages.
-
-### Chat thread — `/chat/[id]` → `GoRoute('/chat/:id')`  · done
-- A separate full-screen route (no app shell). `app/chat/[id]/page.tsx`
-  → `ChatThread`.
-- **Flutter widget:** `chat_thread_screen.dart` — header (back + name),
-  a `ListView` of message bubbles (incoming grey left, outgoing `brand`
-  right, with times / sender labels and day dividers), and a message
-  input bar (attach + send). Sending is a mock.
-- When the conversation has no messages (a chat just started from the
-  contact list) show a centered empty-state ("Start the conversation").
-
-### Account — side drawer (no route)  · done
-- **Next.js:** `components/account/AccountDrawer.tsx` (`"use client"`),
-  opened by the TopBar account icon. Account is a **drawer**, not a route.
-- **Service:** `getProfile()` (`lib/api/profile.ts`, mock
-  `lib/data/profile.ts`).
-- **Model (Dart):** `DriverProfile` (`lib/models/profile.dart`) — name,
-  role, organization, email, phone, employeeId, vehicle, initials.
-- **Flutter widget:** mirror as a `Scaffold.endDrawer` (`Drawer`) on the
-  app shell — the TopBar account `IconButton` calls
-  `Scaffold.of(context).openEndDrawer()`.
-- **Widget tree:** `Drawer` → `Column`:
-  - header `Row`: "My Account" + a close `IconButton`.
-  - profile block: a circular `brand` avatar with the monogram, then
-    name (bold), role, organisation.
-  - menu `ListTile`s — Trip History (`Icons.alt_route`), Settings
-    (`Icons.settings_outlined`), About (`Icons.info_outline`) — each
-    closes the drawer then `context.push(...)`.
-  - a bottom **Log Out** tile (`danger`) → an `AlertDialog` confirm →
-    `context.go('/auth/sign-in')`.
-
-### Settings — `/account/settings` → `GoRoute('/account/settings')`  · done
-- **Opened from:** the account drawer. Detail route — AppBar back +
-  "Settings".
-- **Next.js:** `app/(app)/account/settings/page.tsx` →
-  `components/account/SettingsScreen.tsx` (`"use client"`).
-- **Flutter widget:** `settings_screen.dart`, a `StatefulWidget`.
-- **Layout:** two labelled control groups in `Card`s —
-  - **Notifications** — four rows (Trip off, Message, Bulletin, Calendar
-    on), each a label + a `Switch` (`brand` when on).
-  - **Appearance** — Font Size (Default / Small / Large) and Theme (Use
-    system setting / Light / Dark) rows; tapping a row cycles its value,
-    shown trailing with a `chevron_right`.
-- **State:** all local to the prototype (a real backend would persist it).
-
-### Trip History — `/account/trip-history` → `GoRoute('/account/trip-history')`  · done
-- **Opened from:** the account drawer. Detail route.
-- **Next.js:** `app/(app)/account/trip-history/page.tsx` — async Server
-  Component awaiting `getTrips()`.
-- **Flutter widget:** `trip_history_screen.dart`, a `ConsumerWidget`.
-- **Layout:** a completed-trip count line + a `ListView` of `TripCard`s
-  (`previous` variant); tapping one opens `/trips/[id]`. Empty state when
-  there are none.
-
-### About — `/account/about` → `GoRoute('/account/about')`  · done
-- **Opened from:** the account drawer. Detail route.
-- **Next.js:** `app/(app)/account/about/page.tsx` — static.
-- **Flutter widget:** `about_screen.dart`, a `StatelessWidget`.
-- **Layout:** an app-identity block (rounded `brand` logo tile with
-  `Icons.local_shipping`, name, tagline, version), a description `Card`,
-  an info-rows `Card` (version, provider, support) and a legal-links
-  `Card` (Terms / Privacy / Licenses as `ListTile`s).
-
-### Request Work Order — `/maintenance/new` → `GoRoute('/maintenance/new')`  · done
-- **Opened from:** Home → Maintenance Requests → "New Request", and a
-  trip's **Report an Issue** row. The maintenance-request form.
-- **Next.js:** `app/maintenance/new/page.tsx` → `RequestWorkOrderForm`.
-  Full-screen, no app shell — own header.
-- **Service:** `getWorkOrderOptions()` + `submitWorkOrder()`
-  (`lib/api/maintenance.ts`, mock `lib/data/maintenance.ts`).
-- **Model (Dart):** `WorkOrderDraft` (`lib/models/work_order.dart`) with
-  `AssetType` + `WorkOrderPriority` enums.
-- **Flutter widget:** `request_work_order_screen.dart`, a
-  `StatefulWidget`.
-- **Layout:** a scrollable form — Asset (Truck / Trailer segmented + the
-  asset-number pill), Priority (Low / Medium / High / Critical
-  segmented), Category / Work Order Category / Reason
-  `DropdownButtonFormField`s, Description (required) + Notes
-  `TextField`s, Odometer field, a Photos "+" tile (mock capture), and a
-  **Submit Request** button enabled once a description is entered.
-- **Submit** is a mock → `context.pop()`.
-
-### Notifications — `/notifications` → `GoRoute('/notifications')`  · done
-- **Opened from:** the top-bar notification bell.
-- **Next.js:** `app/notifications/page.tsx` → `NotificationsList`.
-  Full-screen, no app shell.
-- **Service:** `getNotifications()` (`lib/api/notifications.ts`, mock
-  `lib/data/notifications.ts`).
-- **Flutter widget:** `notifications_screen.dart` — header (back +
-  "Notifications") + a search field + a "Today" `ListView` of rows: an
-  icon chip, title + time, message, and an unread dot.
-
-### 404 — `not-found.tsx`  · done (scaffold)
-- **Flutter:** `go_router` `errorBuilder` → a simple "screen not found"
-  page with a "Back to Home" button.
+| Signatures | `signature ^5.4` | `SignaturePad` canvas |
+| Date format | `intl ^0.19` | `lib/format.ts` |
 
 ---
 
-## 7. Template — copy this for each new screen
+## 2. Global Setup
 
-```md
-### <Screen name> — `<next-route>` → `GoRoute('<path>')`  · <status>
-- **Next.js:** <files implemented>
-- **Flutter widget:** <widget file + StatefulWidget/ConsumerWidget>
-- **Widget tree:** <sketch of the main widgets>
-- **Data:** <provider / repository it consumes>
-- **State handling:** loading → <…>, empty → <…>, error → <…>
-- **Tokens/styling:** <notable token usage>
-- **Behaviour to replicate:** <interactions, navigation, actions>
+### Routing — mirrors `app/` route groups
+
+```dart
+GoRouter(
+  initialLocation: '/auth/sign-in',
+  routes: [
+    GoRoute(path: '/auth/sign-in', builder: (_,__) => const SignInScreen()),
+
+    ShellRoute(  // mirrors (app)/ route group
+      builder: (_, __, child) => AppShell(child: child),
+      routes: [
+        GoRoute(path: '/home',      builder: (_,__) => const HomeScreen()),
+        GoRoute(path: '/trips',     builder: (_,__) => const TripsScreen()),
+        GoRoute(path: '/bulletin',  builder: (_,__) => const BulletinScreen()),
+        GoRoute(path: '/calendar',  builder: (_,__) => const ScheduleScreen()),
+        GoRoute(path: '/chats',     builder: (_,__) => const ChatsScreen()),
+        GoRoute(path: '/trips/:id',
+          builder: (_,s) => TripDetailScreen(id: s.pathParameters['id']!)),
+        GoRoute(path: '/compliance',           builder: (_,__) => const ComplianceScreen()),
+        GoRoute(path: '/account/settings',     builder: (_,__) => const SettingsScreen()),
+        GoRoute(path: '/account/trip-history', builder: (_,__) => const TripHistoryScreen()),
+        GoRoute(path: '/account/about',        builder: (_,__) => const AboutScreen()),
+      ],
+    ),
+
+    // Full-screen — no shell
+    GoRoute(path: '/notifications',   builder: (_,__) => const NotificationsScreen()),
+    GoRoute(path: '/expenses',        builder: (_,__) => const ExpenseStatusScreen()),
+    GoRoute(path: '/expenses/new',    builder: (_,__) => const SubmitExpenseScreen()),
+    GoRoute(path: '/trip-sheets',     builder: (_,__) => const TripSheetStatusScreen()),
+    GoRoute(path: '/trip-sheets/new', builder: (_,__) => const SubmitTripSheetScreen()),
+    GoRoute(path: '/chat/:id',
+      builder: (_,s) => ChatThreadScreen(id: s.pathParameters['id']!)),
+  ],
+)
 ```
 
-## Related
+### Theme — mirrors `tailwind.config.ts` tokens
 
-[[shared-context]] · [[codex]] · [[claude]] · [[gemini]] · [[design]] ·
-[[screens]] · [[design-system]] · [[data-model]]
+```dart
+ThemeData(
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: const Color(0xFF1D4ED8),     // brand
+    primary:    const Color(0xFF1D4ED8),    // brand
+    surface:    Colors.white,               // surface
+    surfaceVariant: const Color(0xFFF8FAFC),// surface-muted
+    error:      const Color(0xFFDC2626),    // danger
+    onPrimary:  Colors.white,
+    onSurface:  const Color(0xFF0F172A),    // ink
+  ),
+  cardTheme: CardTheme(
+    elevation: 1, color: Colors.white,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  ),
+)
+```
+
+### AppShell — mirrors `AppShell.tsx` + `BottomNav.tsx`
+
+```dart
+class AppShell extends StatefulWidget { ... }
+class _AppShellState extends State<AppShell> {
+  int _index = 0;
+  final _tabs = ['/home', '/trips', '/bulletin', '/calendar', '/chats'];
+  Widget build(BuildContext context) => Scaffold(
+    body: widget.child,
+    bottomNavigationBar: NavigationBar(
+      selectedIndex: _index,
+      onDestinationSelected: (i) { setState(() => _index = i); context.go(_tabs[i]); },
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.home_outlined),          label: 'Home'),
+        NavigationDestination(icon: Icon(Icons.route_outlined),         label: 'Trips'),
+        NavigationDestination(icon: Icon(Icons.campaign_outlined),      label: 'Bulletin'),
+        NavigationDestination(icon: Icon(Icons.calendar_today_outlined),label: 'Schedule'),
+        NavigationDestination(icon: Icon(Icons.chat_bubble_outline),    label: 'Chats'),
+      ],
+    ),
+  );
+}
+```
+
+---
+
+## 3. Shared Widgets
+
+### PillTabs — mirrors `components/ui/PillTabs.tsx`
+
+Used by `TripsScreen` (Current/Upcoming/Previous) and `ExpenseStatusScreen` (Payroll Addition/Company Paid).
+
+```dart
+class PillTabs extends StatelessWidget {
+  final List<({String key, String label, IconData? icon})> tabs;
+  final String active;
+  final ValueChanged<String> onChanged;
+
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceVariant,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)],
+      ),
+      child: Row(children: tabs.map((tab) {
+        final isActive = tab.key == active;
+        return Expanded(child: GestureDetector(
+          onTap: () => onChanged(tab.key),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: isActive ? primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              if (tab.icon != null) Icon(tab.icon, size: 16,
+                color: isActive ? Colors.white : Colors.grey),
+              const SizedBox(width: 4),
+              Text(tab.label, style: TextStyle(fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : Colors.grey[600])),
+            ]),
+          ),
+        ));
+      }).toList()),
+    );
+  }
+}
+```
+
+### StatusBadge — mirrors `components/ui/StatusBadge.tsx`
+
+```dart
+class StatusBadge extends StatelessWidget {
+  final String status;
+  Color get _bg => switch (status) {
+    'in-progress' || 'active' => const Color(0xFF1D4ED8),
+    'completed'               => Colors.grey.shade300,
+    'approved'                => Colors.green.shade100,
+    'rejected'                => Colors.red.shade100,
+    _                         => Colors.amber.shade100,
+  };
+  Color get _fg => switch (status) {
+    'in-progress' || 'active' => Colors.white,
+    'approved'                => Colors.green.shade800,
+    'rejected'                => Colors.red.shade800,
+    _                         => Colors.grey.shade700,
+  };
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(color: _bg, borderRadius: BorderRadius.circular(999)),
+    child: Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _fg)),
+  );
+}
+```
+
+---
+
+## 4. Screen Mirrors
+
+---
+
+### 🔐 Sign In `/auth/sign-in`
+
+```
+Scaffold (no AppBar)
+  SafeArea > SingleChildScrollView > Column
+    _BrandBlock (dark container, logo, "TrackSmart", tagline)
+    Card > Column
+      Text("Sign in to your account")
+      DropdownButtonFormField<User>  (demo user picker)
+      _OrDivider
+      TextFormField (email)
+      TextFormField (password, obscureText, suffixIcon: visibility toggle)
+      ElevatedButton("Sign In")
+    Text (prototype disclaimer)
+```
+
+---
+
+### 🏠 Home `/home`
+
+```
+CustomScrollView > SliverList
+  _CompanyCard
+  _ComplianceCard          onTap: go('/compliance')
+  _ActionCard("Expenses",  primary → go('/expenses/new'), secondary → go('/expenses'))
+  _ActionCard("Maintenance Requests")
+  _ActionCard("Trip Sheets", primary → go('/trip-sheets/new'), secondary → go('/trip-sheets'))
+  _PayrollCard
+  _TimeTrackingCard        Timer.periodic(1s) while clocked in
+  Row(_RefreshButton, _HelpButton)
+  _LogoutButton            → AlertDialog → go('/auth/sign-in')
+```
+
+---
+
+### 🛣️ Trips `/trips`
+
+```
+Column
+  PillTabs(tabs: [current🚛, upcoming📅, previous🕐], active: _tab)
+  Expanded
+    // _tab == 'current':  TripCard(variant: current) OR _EmptyNote
+    // _tab == 'upcoming': ListView(trips.upcoming, TripCard(variant: upcoming)) OR _EmptyNote
+    // _tab == 'previous': ListView(trips.previous, TripCard(variant: previous)) OR _EmptyNote
+```
+
+**TripCard:** trip ref + StatusBadge · origin→destination · date window · meta row · FlutterMap (current only) · TextButton("View trip →")
+
+---
+
+### 📋 Trip Detail `/trips/:id`
+
+```
+Scaffold > AppBar("Trip <id>", leading: BackButton)
+CustomScrollView
+  _TripSummaryCard      (FlutterMap)
+  _TripProgressStrip    (LinearProgressIndicator + "X/Y stops")
+  _DispatchNoteCard
+  _TripDetailsCard
+  ListView(_StopRow for each stop)
+    ExpansionTile
+      _StopDetail
+      _StopActions      (state machine — see below)
+```
+
+**`_StopActions` state machine:**
+```dart
+// dialog: null | 'trailer' | 'temp' | 'odometer' | 'signature' | 'document'
+// history: List<{label, time, detail}>
+// Pickup:  Arrived→odometer, PickedUp→trailer→temp→doc, Departed→direct
+// Dropoff: Arrived→odometer, Delivered→signature→doc
+// Acquire: Completed→odometer
+// Hook:    Completed→trailer
+// Others:  Completed→direct
+// After each dialog completes → append to history list
+// Navigate button (pickup/dropoff): launches Google Maps URL
+```
+
+**Signature:** `Signature` widget (signature package), `SignatureController`, Clear + Confirm + Skip.
+
+---
+
+### 📢 Bulletin `/bulletin`
+
+```
+Column
+  _SearchBar
+  Expanded > ListView.builder
+    _LoadTenderCard
+      Row(avatar, name, time, unread dot)
+      Text(route)
+      Text(pickup + delivery)
+      // before action:
+      Row(ElevatedButton("Accept"), OutlinedButton("Decline"))
+      // after action:
+      StatusBadge + ExpansionTile(detail)
+```
+
+---
+
+### 📅 Schedule `/calendar`
+
+```
+Column
+  ToggleButtons(["Calendar", "List"])
+  Expanded
+    // Calendar:
+    Column
+      _MonthHeader
+      GridView(7-col, day cells + dots)
+      _DayDetail (TabBar: Events | Shifts | Timesheet)
+    // List:
+    ListView.builder
+      _AgendaDateHeader (date, "Today" badge)
+      _AgendaRow(icon, title, kind tag)
+```
+
+---
+
+### 💬 Chats `/chats`
+
+```
+Column
+  _SearchBar
+  Expanded > ListView.builder
+    ListTile(leading: CircleAvatar(initials), title, subtitle: lastMessage,
+      trailing: Column(time, UnreadDot), onTap: go('/chat/$id'))
+  FAB("+ New chat") → showModalBottomSheet(_ContactPicker)
+```
+
+---
+
+### 💬 Chat Thread `/chat/:id`
+
+```
+Scaffold
+  AppBar(BackButton, Text(contactName))
+  Column
+    Expanded > ListView.builder(reverse: true)
+      _MessageBubble(incoming: grey-left / outgoing: primary-right)
+      _DayDivider
+    _MessageInputBar(TextField + attach + send)
+```
+
+---
+
+### 🔔 Notifications `/notifications`
+
+```
+Scaffold
+  AppBar(BackButton, "Notifications")
+  Column > _SearchBar + Expanded > ListView.builder
+    _NotificationRow(icon chip, Column(title+time, message), UnreadDot)
+```
+
+---
+
+### 📄 Compliance `/compliance`
+
+```
+Scaffold > AppBar("My Compliance") > CustomScrollView
+  _SectionHeader("Basic")
+  _DocumentCard("Driver's License") + ElevatedButton("Update")
+  _DocumentCard("Passport")
+  _DocumentCard("Emergency Contact")
+  _SectionHeader("Documents")
+  ElevatedButton("Add") → showModalBottomSheet(_AddDocumentSheet)
+  _SectionHeader("Certifications")
+  ElevatedButton("Add") → showModalBottomSheet(_AddCertificationForm)
+```
+
+---
+
+### 💸 Expense Status `/expenses`
+
+```
+Scaffold
+  AppBar(BackButton, "Expense Status")
+  Column
+    PillTabs([payroll💵, company🏢])   // mirrors PillTabs.tsx
+    _SearchBar
+    Expanded > ListView.builder (filtered by tab + query)
+      Card
+        Row(Text(description), StatusBadge)
+        _TripIdChip (brand-light bg)
+        Text(amount + currency + date)
+    // empty: Card("No expenses found")
+```
+
+---
+
+### 💸 Submit Expense `/expenses/new`
+
+```
+Scaffold
+  AppBar(BackButton, "Submit Expense · Step N/5")
+  Stepper(horizontal, steps: [
+    Step("Type",     _ExpenseTypeStep)      // RadioListTile
+    Step("Receipt",  _AddReceiptStep)       // grid of capture options
+    Step("Details",  _ExpenseDetailsStep)   // amount, desc, notes, vendor
+    Step("Category", _ExpenseCategoryStep)  // RadioListTile + truck search
+    Step("Review",   _ReviewSubmitStep)     // summary + ElevatedButton
+  ])
+```
+
+---
+
+### ⚙️ Settings `/account/settings`
+
+```
+Scaffold > AppBar("Settings") > ListView
+  _SectionHeader("Notifications")
+  SwitchListTile("Trip")
+  SwitchListTile("Message")
+  SwitchListTile("Bulletin")
+  SwitchListTile("Calendar")
+  _SectionHeader("Appearance")
+  ListTile("Font Size", trailing: Text(size)) → cycle on tap
+  ListTile("Theme",     trailing: Text(theme)) → cycle on tap
+```
+
+---
+
+## 5. Component Mapping
+
+| Next.js | Flutter |
+|---------|---------|
+| `AppShell` | Custom `AppShell` + `ShellRoute` + `NavigationBar` |
+| `TopBar` | `AppBar` |
+| `BottomNav` | `NavigationBar` (Material 3) |
+| **`PillTabs`** | Custom `PillTabs` widget (§3) |
+| `BottomSheet` | `showModalBottomSheet` |
+| `StatusBadge` | Custom `StatusBadge` widget (§3) |
+| `Icon` | `Icon` (Material) |
+| `TripMap` / `TripMapLeaflet` | `FlutterMap` + `TileLayer` + `PolylineLayer` + `MarkerLayer` |
+| **`SignaturePad`** | `Signature` widget (`signature` package) |
+| **`StopActions`** | `_StopActionsState` state machine |
+| `AccountDrawer` | `Drawer` from `AppBar` action |
+| Form fields | `TextFormField` in `Form` |
+| `ScreenPlaceholder` | `Center(Column([Icon, Text, ...]))` |
+
+---
+
+## 6. Repository Layer
+
+Mirrors `lib/api/*` — one abstract class per resource, replaced by HTTP client in Stage 2.
+
+```dart
+// Example:
+abstract class TripsRepository {
+  Future<TripsData> getTrips();
+  Future<Trip> getTrip(String id);
+}
+// MockTripsRepository: reads from static Dart fixtures (mirrors lib/data/trips.ts)
+// HttpTripsRepository: calls real TrackSmart API (Stage 2)
+```
+
+Provide via Riverpod:
+```dart
+final tripsRepositoryProvider = Provider<TripsRepository>((ref) => MockTripsRepository());
+final tripsProvider = FutureProvider<TripsData>((ref) =>
+  ref.watch(tripsRepositoryProvider).getTrips());
+```
