@@ -4,9 +4,13 @@
  * Frontend ⇄ this file. `submitExpense` is a mock today; a real build
  * would POST the draft to the TrackSmart API.
  */
-import { expenseRecords, type ExpenseRecord } from "@/lib/data/expenses";
+import {
+  expenseRecords,
+  type ExpenseRecord,
+  type ExpenseType,
+} from "@/lib/data/expenses";
 
-export type ExpenseType = "payroll" | "company";
+export type { ExpenseType };
 export type ExpenseCategory = "truck" | "trailer" | "general";
 export type Currency = "USD" | "CAD";
 export type ExpenseCountry = "USA" | "Canada" | "Mexico";

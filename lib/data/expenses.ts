@@ -6,12 +6,19 @@
  */
 export type ExpenseStatus = "pending" | "approved" | "rejected";
 
+/** How the expense is paid — the two flows in the Submit Expense wizard. */
+export type ExpenseType = "payroll" | "company";
+
 export type ExpenseRecord = {
   id: string;
   description: string;
   amount: string;
   currency: "USD" | "CAD";
   status: ExpenseStatus;
+  /** Payroll Addition or Company Paid. */
+  expenseType: ExpenseType;
+  /** Trip the expense belongs to (trip id / number). */
+  tripId: string;
   /** ISO date (YYYY-MM-DD). */
   submittedAt: string;
 };
@@ -24,6 +31,8 @@ export const expenseRecords: ExpenseRecord[] = [
     amount: "80.00",
     currency: "USD",
     status: "pending",
+    expenseType: "company",
+    tripId: "12851",
     submittedAt: "2026-05-18",
   },
   {
@@ -32,6 +41,8 @@ export const expenseRecords: ExpenseRecord[] = [
     amount: "142.50",
     currency: "CAD",
     status: "approved",
+    expenseType: "payroll",
+    tripId: "12839",
     submittedAt: "2026-05-12",
   },
   {
@@ -40,6 +51,8 @@ export const expenseRecords: ExpenseRecord[] = [
     amount: "35.00",
     currency: "CAD",
     status: "rejected",
+    expenseType: "company",
+    tripId: "12831",
     submittedAt: "2026-05-05",
   },
 ];

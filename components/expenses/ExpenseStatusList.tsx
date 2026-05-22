@@ -1,14 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
+import { PillTabs } from "@/components/ui/PillTabs";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDate } from "@/lib/format";
-import type { ExpenseRecord } from "@/lib/data/expenses";
+import type { ExpenseRecord, ExpenseType } from "@/lib/data/expenses";
+
+const TABS = [
+  { key: "payroll", label: "Payroll Addition", icon: "dollar" },
+  { key: "company", label: "Company Paid", icon: "building" },
+];
 
 /**
  * ExpenseStatusList — the "Status" view: submitted expenses and their
- * approval status. Reached from Home → Expenses → "Status".
+ * approval status, split by expense type (Payroll Addition / Company
+ * Paid) with a search field. Reached from Home → Expenses → "Status".
  */
 export function ExpenseStatusList({
   expenses,
@@ -16,6 +24,18 @@ export function ExpenseStatusList({
   expenses: ExpenseRecord[];
 }) {
   const router = useRouter();
+  const [tab, setTab] = useState<ExpenseType>("payroll");
+  const [query, setQuery] = useState("");
+
+  const term = query.trim().toLowerCase();
+  const filtered = expenses.filter(
+    (expense) =>
+      expense.expenseType === tab &&
+      (term === "" ||
+        `${expense.description} ${expense.tripId}`
+          .toLowerCase()
+          .includes(term)),
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -35,15 +55,36 @@ export function ExpenseStatusList({
         <span className="w-9 shrink-0" aria-hidden="true" />
       </header>
 
-      {/* List */}
-      <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {expenses.length === 0 ? (
+      {/* Tabs + search + list */}
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+        <PillTabs
+          tabs={TABS}
+          active={tab}
+          onChange={(key) => setTab(key as ExpenseType)}
+        />
+
+        {/* Search */}
+        <div className="relative">
+          <Icon
+            name="search"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search expenses"
+            className="w-full rounded-lg bg-surface py-2.5 pl-9 pr-3 text-sm text-ink shadow-card outline-none placeholder:text-ink-muted focus:ring-2 focus:ring-brand/30"
+          />
+        </div>
+
+        {/* List */}
+        {filtered.length === 0 ? (
           <div className="rounded-card bg-surface p-6 text-center text-sm text-ink-muted shadow-card">
-            No expenses submitted yet.
+            No expenses found.
           </div>
         ) : (
           <ul className="space-y-3">
-            {expenses.map((expense) => (
+            {filtered.map((expense) => (
               <li
                 key={expense.id}
                 className="rounded-card bg-surface p-4 shadow-card"
@@ -54,7 +95,11 @@ export function ExpenseStatusList({
                   </p>
                   <StatusBadge status={expense.status} />
                 </div>
-                <p className="mt-1 text-xs font-medium text-ink-muted">
+                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand-light px-2 py-0.5 text-[11px] font-semibold text-brand">
+                  <Icon name="route" className="h-3 w-3" />
+                  Trip {expense.tripId}
+                </span>
+                <p className="mt-1.5 text-xs font-medium text-ink-muted">
                   {expense.amount} {expense.currency} ·{" "}
                   {formatDate(expense.submittedAt)}
                 </p>

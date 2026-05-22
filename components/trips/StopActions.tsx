@@ -108,8 +108,17 @@ function ValueDialog({
   );
 }
 
-/** A draw-to-sign canvas pad. */
-function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
+/**
+ * A draw-to-sign canvas pad. The clear action is exposed through
+ * `clearRef` so the dialog can render Clear as a proper button.
+ */
+function SignaturePad({
+  onChange,
+  clearRef,
+}: {
+  onChange: (hasInk: boolean) => void;
+  clearRef: React.MutableRefObject<(() => void) | null>;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const inked = useRef(false);
@@ -153,61 +162,73 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
   const end = () => {
     drawing.current = false;
   };
-  const clear = () => {
-    const c = canvasRef.current!;
+
+  clearRef.current = () => {
+    const c = canvasRef.current;
+    if (!c) return;
     c.getContext("2d")!.clearRect(0, 0, c.width, c.height);
     inked.current = false;
     onChange(false);
   };
 
   return (
-    <div>
-      <canvas
-        ref={canvasRef}
-        width={320}
-        height={150}
-        onPointerDown={start}
-        onPointerMove={move}
-        onPointerUp={end}
-        onPointerLeave={end}
-        className="w-full touch-none rounded-lg border border-ink/15 bg-surface-muted"
-        style={{ height: 150 }}
-      />
-      <button
-        type="button"
-        onClick={clear}
-        className="mt-1 text-xs font-semibold text-ink-muted"
-      >
-        Clear
-      </button>
-    </div>
+    <canvas
+      ref={canvasRef}
+      width={320}
+      height={150}
+      onPointerDown={start}
+      onPointerMove={move}
+      onPointerUp={end}
+      onPointerLeave={end}
+      className="w-full touch-none rounded-lg border border-ink/15 bg-surface-muted"
+      style={{ height: 150 }}
+    />
   );
 }
 
-/** Capture the receiver's e-signature — a bottom sheet. */
+/** Capture the receiver's e-signature — a bottom sheet. Skippable. */
 function SignatureDialog({
   onClose,
   onConfirm,
+  onSkip,
 }: {
   onClose: () => void;
   onConfirm: () => void;
+  onSkip: () => void;
 }) {
   const [signed, setSigned] = useState(false);
+  const clearRef = useRef<(() => void) | null>(null);
   return (
     <BottomSheet open onClose={onClose} title="Receiver Signature">
       <p className="-mt-1 text-sm text-ink-muted">
         The receiver signs below to confirm delivery.
       </p>
       <div className="mt-3">
-        <SignaturePad onChange={setSigned} />
+        <SignaturePad onChange={setSigned} clearRef={clearRef} />
+      </div>
+      <div className="mt-3 flex gap-3">
+        <button
+          type="button"
+          onClick={() => clearRef.current?.()}
+          className="flex-1 rounded-lg border border-ink/15 bg-surface py-3 text-sm font-semibold text-ink"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          disabled={!signed}
+          onClick={onConfirm}
+          className="flex-1 rounded-lg bg-brand py-3 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          Confirm
+        </button>
       </div>
       <button
         type="button"
-        disabled={!signed}
-        onClick={onConfirm}
-        className="mt-3 w-full rounded-lg bg-brand py-3 text-sm font-semibold text-white disabled:opacity-50"
+        onClick={onSkip}
+        className="mt-2 w-full py-2 text-center text-sm font-medium text-ink-muted underline"
       >
-        Confirm
+        Skip signature
       </button>
     </BottomSheet>
   );
@@ -420,6 +441,7 @@ export function StopActions({ stop }: { stop: TripStop }) {
         <SignatureDialog
           onClose={cancel}
           onConfirm={() => setDialog("document")}
+          onSkip={() => setDialog("document")}
         />
       )}
       <AddDocumentSheet

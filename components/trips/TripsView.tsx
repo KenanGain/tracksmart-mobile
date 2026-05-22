@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Icon } from "@/components/ui/Icon";
+import { PillTabs } from "@/components/ui/PillTabs";
 import { TripCard } from "./TripCard";
 import type { TripsData } from "@/lib/api/trips";
 
@@ -29,27 +29,12 @@ export function TripsView({ trips }: { trips: TripsData }) {
 
   return (
     <div className="space-y-4">
-      {/* Tab bar — rounded pill bubbles */}
-      <div className="flex gap-1 rounded-full bg-surface-muted p-1 shadow-inner">
-        {TABS.map((option) => {
-          const active = tab === option.key;
-          return (
-            <button
-              key={option.key}
-              type="button"
-              onClick={() => setTab(option.key)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2.5 text-[13px] font-semibold transition-colors ${
-                active
-                  ? "bg-brand text-white shadow-nav"
-                  : "text-ink-muted"
-              }`}
-            >
-              <Icon name={option.icon} className="h-4 w-4" />
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+      {/* Tab bar — shared rounded pill bubbles */}
+      <PillTabs
+        tabs={TABS}
+        active={tab}
+        onChange={(key) => setTab(key as Tab)}
+      />
 
       {/* Current */}
       {tab === "current" &&
