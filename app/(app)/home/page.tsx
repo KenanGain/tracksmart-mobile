@@ -32,7 +32,7 @@ export default async function HomePage() {
       <ActionCard
         title="Maintenance Requests"
         actions={[
-          { icon: "plus", label: "New Request" },
+          { icon: "plus", label: "New Request", href: "/maintenance/new" },
           { icon: "menu", label: "History" },
         ]}
       />

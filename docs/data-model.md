@@ -33,6 +33,10 @@ type StopType = "pickup" | "dropoff" | "waypoint";
 // Implemented kinds for a TripStop (lib/data/trips.ts).
 type TripStopKind = "acquire" | "hook" | "pickup" | "drop-off";
 
+// Work-order request (lib/data/maintenance.ts).
+type AssetType = "Truck" | "Trailer";
+type WorkOrderPriority = "Low" | "Medium" | "High" | "Critical";
+
 type CalendarEventKind =
   | "delivery"
   | "pickup"
@@ -177,6 +181,20 @@ A person the driver can message — backs the New Chat contact list. Mock:
 | `name` | string | |
 | `role` | string | Job title |
 | `initials` | string | Avatar monogram |
+
+### WorkOrderDraft
+A maintenance / work-order request. Mock: `lib/data/maintenance.ts`.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `asset` | `AssetType` | Truck / Trailer |
+| `priority` | `WorkOrderPriority` | |
+| `category` | string | Affected system / part |
+| `workOrderCategory` | string | Type of work |
+| `reason` | string | Optional |
+| `description` | string | Required |
+| `notes` | string | Optional |
+| `odometer` | string | Optional |
 
 ## Relationships
 

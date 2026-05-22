@@ -379,12 +379,18 @@ render outside it (no TopBar / BottomNav).
   when missing.
 - **Flutter widget:** `trip_detail_screen.dart`, a `ConsumerWidget`. A
   detail route — AppBar back button + "Trip &lt;id&gt;".
-- **`TripDetailView`** — the summary card with the route map, a **Trip
-  Progress** strip (`LinearProgressIndicator`, `success`), a **Submit**
-  card (`TripSubmitCard` — opens a `showModalBottomSheet` to submit
-  documents, notes & photos), a **Dispatch Note** card (`warning`-tinted),
-  a **Trip Details** card (equipment, power unit, trailer, drivers,
-  dispatcher, issued-on) and the stop timeline.
+- **`TripDetailView`** —
+  - **`TripOverviewCard`** — the trip summary, the route map and an
+    **expandable Trip Details** section (a `warning`-tinted Dispatch
+    Note + equipment, power unit, trailer, drivers, dispatcher,
+    issued-on), all in one card; an `ExpansionTile` or a tap-toggled
+    section reveals it.
+  - a **Trip Progress** strip (`LinearProgressIndicator`, `success`);
+  - a **Submit** card (`TripSubmitCard` — opens a `showModalBottomSheet`
+    to submit documents, notes & photos);
+  - an **Expense** row → `/expenses/new`;
+  - the stop timeline;
+  - a **Report an Issue** row → `/maintenance/new`.
 - **`TripStopRow`** — a timeline row with three states driven by the
   first not-yet-completed stop:
   - **done** — green check node, white card, "Done" badge.
@@ -392,23 +398,25 @@ render outside it (no TopBar / BottomNav).
     ring and a "Next" badge.
   - **upcoming** — grey-numbered node, muted card.
   The rail node shows the stop number; the connector is `success` for
-  completed segments. Expands to the full stop detail (equipment chips,
-  address, appointment, pickup/drop-off number, temperature, phone,
-  email, directions, a `warning`-tinted per-stop note — "Pickup Note" /
-  "Drop Off Note") and `StopActions`.
+  completed segments. Expands to the full stop detail — equipment chips,
+  the `warning`-tinted per-stop note ("Pickup Note" / "Drop Off Note"),
+  the address (tap → opens Google Maps), appointment, pickup/drop-off
+  number, temperature, phone, email — and `StopActions`.
 - **`StopActions`** — status buttons inside the expanded stop block:
   - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived opens an
-    odometer dialog; Picked Up runs confirm-trailer → confirm-temperature
-    → odometer; Departed completes directly.
+    odometer dialog (the value is kept); Picked Up runs confirm-trailer →
+    confirm-temperature → document upload; Departed completes directly.
   - **Drop Off** → **Arrived / Delivered**. Arrived opens an odometer
-    dialog; Delivered runs an e-signature pad → POD document upload (the
-    Add Document capture sheet).
-  - **Acquire / Hook** → a single **Mark as Completed** button.
+    dialog; Delivered runs a **receiver e-signature** pad → POD document
+    upload (the Add Document capture sheet).
+  - **Acquire** → odometer dialog, then **Mark as Completed**.
+  - **Hook** → a single **Mark as Completed** button.
   Dialogs mirror as `showDialog` (`AlertDialog`); the e-signature is a
   draw-to-sign `CustomPaint` / `signature` pad. Completed actions append
-  to an **Action History** list (label + timestamp) shown under the
-  buttons, with a **Navigate** button that opens directions to the stop.
-  All actions are mocks.
+  to an **Action History** list (label + timestamp; Arrived / Acquire
+  also keep the odometer value) shown under the buttons. **Pick Up** and
+  **Drop Off** stops also show a **Navigate** button that opens
+  directions to the stop. All actions are mocks.
 - Loads are nested under a trip, not a top-level screen.
 
 ### Bulletin — `/bulletin` → `GoRoute('/bulletin')`  · done
@@ -531,6 +539,25 @@ render outside it (no TopBar / BottomNav).
   `Icons.local_shipping`, name, tagline, version), a description `Card`,
   an info-rows `Card` (version, provider, support) and a legal-links
   `Card` (Terms / Privacy / Licenses as `ListTile`s).
+
+### Request Work Order — `/maintenance/new` → `GoRoute('/maintenance/new')`  · done
+- **Opened from:** Home → Maintenance Requests → "New Request", and a
+  trip's **Report an Issue** row. The maintenance-request form.
+- **Next.js:** `app/maintenance/new/page.tsx` → `RequestWorkOrderForm`.
+  Full-screen, no app shell — own header.
+- **Service:** `getWorkOrderOptions()` + `submitWorkOrder()`
+  (`lib/api/maintenance.ts`, mock `lib/data/maintenance.ts`).
+- **Model (Dart):** `WorkOrderDraft` (`lib/models/work_order.dart`) with
+  `AssetType` + `WorkOrderPriority` enums.
+- **Flutter widget:** `request_work_order_screen.dart`, a
+  `StatefulWidget`.
+- **Layout:** a scrollable form — Asset (Truck / Trailer segmented + the
+  asset-number pill), Priority (Low / Medium / High / Critical
+  segmented), Category / Work Order Category / Reason
+  `DropdownButtonFormField`s, Description (required) + Notes
+  `TextField`s, Odometer field, a Photos "+" tile (mock capture), and a
+  **Submit Request** button enabled once a description is entered.
+- **Submit** is a mock → `context.pop()`.
 
 ### Notifications — `/notifications` → `GoRoute('/notifications')`  · done
 - **Opened from:** the top-bar notification bell.

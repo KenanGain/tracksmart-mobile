@@ -98,7 +98,7 @@ function ValueDialog({
   placeholder: string;
   numeric?: boolean;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm: (value: string) => void;
 }) {
   const [value, setValue] = useState("");
   return (
@@ -124,7 +124,7 @@ function ValueDialog({
         <button
           type="button"
           disabled={value.trim() === ""}
-          onClick={onConfirm}
+          onClick={() => onConfirm(value.trim())}
           className="flex-1 rounded-lg bg-brand py-2.5 text-sm font-bold text-white disabled:opacity-50"
         >
           CONFIRM
@@ -222,10 +222,10 @@ function SignatureDialog({
   return (
     <Modal>
       <h3 className="text-center text-base font-bold text-ink">
-        Driver Signature
+        Receiver Signature
       </h3>
       <p className="mt-1 text-center text-sm text-ink-muted">
-        Sign in the box to confirm delivery.
+        The receiver signs in the box to confirm delivery.
       </p>
       <div className="mt-4">
         <SignaturePad onChange={setSigned} />
@@ -259,17 +259,20 @@ type DialogKind =
   | "signature"
   | "document";
 
-type HistoryEntry = { label: string; time: string };
+type HistoryEntry = { label: string; time: string; detail?: string };
 
 /**
  * StopActions — the status buttons for an expanded stop.
  *  - Pick Up → Arrived / Picked Up / Departed.
- *    · Arrived  → odometer reading.
- *    · Picked Up → confirm trailer → confirm temperature → odometer.
+ *    · Arrived  → odometer reading (the value is kept in the history).
+ *    · Picked Up → confirm trailer → confirm temperature → document upload.
+ *    · Departed → completes directly.
  *  - Drop Off → Arrived / Delivered.
- *    · Arrived  → odometer reading.
- *    · Delivered → e-signature → POD document upload.
- *  - Acquire / Hook → a single Mark as Completed button.
+ *    · Arrived  → odometer reading (kept).
+ *    · Delivered → receiver e-signature → POD document upload.
+ *  - Acquire → odometer reading, then Mark as Completed.
+ *  - Hook → a single Mark as Completed button.
+ * Navigate is shown only for Pick Up / Drop Off stops.
  * Completed actions are listed under **Action History** with a time, and
  * a **Navigate** button opens directions to the stop. All mocks.
  */
@@ -283,11 +286,11 @@ export function StopActions({ stop }: { stop: TripStop }) {
 
   const isDone = (label: string) => history.some((h) => h.label === label);
 
-  const finish = (label: string) => {
+  const finish = (label: string, detail?: string) => {
     setHistory((h) =>
       h.some((e) => e.label === label)
         ? h
-        : [...h, { label, time: formatNow() }],
+        : [...h, { label, time: formatNow(), detail }],
     );
     setDialog(null);
     setPending(null);
@@ -368,7 +371,14 @@ export function StopActions({ stop }: { stop: TripStop }) {
         ) : (
           <StatusButton
             label="Completed"
-            onClick={() => finish("Completed")}
+            onClick={() => {
+              if (stop.kind === "acquire") {
+                setPending("Completed");
+                setDialog("odometer");
+              } else {
+                finish("Completed");
+              }
+            }}
           />
         )}
       </div>
@@ -388,8 +398,13 @@ export function StopActions({ stop }: { stop: TripStop }) {
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-success">
                   <Icon name="check" className="h-4 w-4" />
                   {entry.label}
+                  {entry.detail && (
+                    <span className="font-normal text-ink-muted">
+                      · {entry.detail}
+                    </span>
+                  )}
                 </span>
-                <span className="text-sm font-semibold text-ink">
+                <span className="shrink-0 text-sm font-semibold text-ink">
                   {entry.time}
                 </span>
               </li>
@@ -398,16 +413,18 @@ export function StopActions({ stop }: { stop: TripStop }) {
         </div>
       )}
 
-      {/* Navigate */}
-      <a
-        href={navUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 rounded-lg bg-ink-muted py-3 text-sm font-bold text-white"
-      >
-        <Icon name="map-pin" className="h-4 w-4" />
-        Navigate
-      </a>
+      {/* Navigate — only for Pick Up / Drop Off stops */}
+      {(isPickup || isDelivery) && (
+        <a
+          href={navUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 rounded-lg bg-ink-muted py-3 text-sm font-bold text-white"
+        >
+          <Icon name="map-pin" className="h-4 w-4" />
+          Navigate
+        </a>
+      )}
 
       {/* Dialog flow */}
       {dialog === "trailer" && (
@@ -422,7 +439,7 @@ export function StopActions({ stop }: { stop: TripStop }) {
           subtitle={`Required: ${stop.temperature ?? "—"}`}
           placeholder="Enter current temp"
           onCancel={cancel}
-          onConfirm={() => setDialog("odometer")}
+          onConfirm={() => setDialog("document")}
         />
       )}
       {dialog === "odometer" && (
@@ -432,7 +449,7 @@ export function StopActions({ stop }: { stop: TripStop }) {
           placeholder="Enter km"
           numeric
           onCancel={cancel}
-          onConfirm={() => finish(pending ?? "Arrived")}
+          onConfirm={(km) => finish(pending ?? "Arrived", `${km} km`)}
         />
       )}
       {dialog === "signature" && (
@@ -444,7 +461,7 @@ export function StopActions({ stop }: { stop: TripStop }) {
       <AddDocumentSheet
         open={dialog === "document"}
         onClose={cancel}
-        onCapture={() => finish("Delivered")}
+        onCapture={() => finish(pending ?? "Picked Up")}
       />
     </div>
   );

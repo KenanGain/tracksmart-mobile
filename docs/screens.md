@@ -50,6 +50,7 @@ tags: [screens, routes]
 | `/expenses/new` | Submit Expense | done | 5-step expense wizard (no shell) |
 | `/trip-sheets` | Trip Sheet Status | done | Submitted trip sheets + status |
 | `/trip-sheets/new` | Submit Trip Sheet | done | Trip-sheet upload form (no shell) |
+| `/maintenance/new` | Request Work Order | done | Maintenance / work-order request (no shell) |
 | `/auth/sign-in` | Sign in | done | Demo + manual sign-in (no shell) |
 
 > **Loads** are not a top-level tab — a load always belongs to a trip, so
@@ -62,9 +63,10 @@ tags: [screens, routes]
 - ✅ **Company card** — carrier/business name + logo (monogram placeholder).
 - ✅ **My Compliance card** — summary; taps through to `/compliance`.
 - ✅ **Expenses / Maintenance Requests / Trip Sheets** — action cards.
-  Expenses (`/expenses/new`, `/expenses`) and Trip Sheets
-  (`/trip-sheets/new`, `/trip-sheets`) are wired; Maintenance Requests
-  tiles are placeholders.
+  Expenses (`/expenses/new`, `/expenses`), Trip Sheets
+  (`/trip-sheets/new`, `/trip-sheets`) and Maintenance Requests "New
+  Request" (`/maintenance/new`) are wired; the Maintenance "History"
+  tile is a placeholder.
 - ✅ **Payroll** — summary card with an empty state.
 - ✅ **Time Tracking** — CLOCK IN / CLOCK OUT toggle with a live elapsed
   timer (green) while clocked in.
@@ -88,28 +90,37 @@ tags: [screens, routes]
 
 ### Trip detail `/trips/[id]`  ✅ done
 - Detail route (TopBar back button + "Trip &lt;id&gt;").
-- **`TripDetailView`** — the full trip: the summary card with the route
-  map, a **Trip Progress** strip (done/total + bar), a **Submit** card
-  (opens a sheet to submit documents, notes & photos), a **Dispatch
-  Note** card, a **Trip Details** card (equipment, power unit, trailer,
-  drivers, dispatcher, issued-on) and the stop **timeline**.
+- **`TripDetailView`** — the full trip:
+  - **`TripOverviewCard`** — the trip summary, the route map and an
+    **expandable Trip Details** section (the **Dispatch Note** +
+    equipment, power unit, trailer, drivers, dispatcher, issued-on) —
+    combined into one card; tapping the "Trip Details" row expands it.
+  - a **Trip Progress** strip (done/total + bar);
+  - a **Submit** card (opens a sheet to submit documents, notes & photos);
+  - an **Expense** row → `/expenses/new`;
+  - the stop **timeline**;
+  - a **Report an Issue** row → `/maintenance/new`.
 - Stop kinds: **Acquire / Hook / Pick Up / Drop Off**. Each timeline stop
   has one of three states — **done** (green check), the **next** pending
   stop (brand ring + "Next" badge) or **upcoming** (muted). The rail node
   shows the stop number; the connector is green for completed segments.
-- Each stop expands to its detail — equipment (unit / trailer), address,
-  appointment date & time, pick-up / drop-off number, temperature,
-  phone, email, directions, a per-stop note ("Pickup Note" / "Drop Off
-  Note"), and the status actions below.
+- Each stop expands to its detail — equipment (unit / trailer), the
+  per-stop note ("Pickup Note" / "Drop Off Note"), the address (tap to
+  open in **Google Maps**), appointment date & time, pick-up / drop-off
+  number, temperature, phone, email — then the status actions below.
 - **Status actions** (`StopActions`):
   - **Pick Up** → **Arrived / Picked Up / Departed**. Arrived prompts an
-    odometer reading; Picked Up runs confirm-trailer → confirm-temperature
-    → odometer; Departed completes directly.
+    odometer reading (the value is kept in the history); Picked Up runs
+    confirm-trailer → confirm-temperature → document upload; Departed
+    completes directly.
   - **Drop Off** → **Arrived / Delivered**. Arrived prompts an odometer
-    reading; Delivered runs an e-signature → POD document upload.
-  - **Acquire / Hook** → a single **Mark as Completed** button.
-- Completed actions are listed under **Action History** with a timestamp;
-  a **Navigate** button opens directions to the stop.
+    reading; Delivered runs a **receiver e-signature** → POD document
+    upload.
+  - **Acquire** → odometer reading, then **Mark as Completed**.
+  - **Hook** → a single **Mark as Completed** button.
+- Completed actions are listed under **Action History** with a timestamp
+  (Arrived / Acquire keep the odometer value). **Pick Up** and **Drop
+  Off** stops also show a **Navigate** button that opens directions.
 - Data via `getTrips()` / `getTrip(id)` (`lib/api/trips.ts`, mock
   `lib/data/trips.ts`).
 
@@ -248,6 +259,20 @@ tags: [screens, routes]
 - A list of submitted trip sheets — period range, status badge
   (Pending / Approved / Rejected), submitted date.
 - Data via `getTripSheets()` (`lib/api/trip-sheets.ts`).
+
+### Request Work Order `/maintenance/new`  ✅ done
+- The **maintenance request** form — one form, two entry points: Home →
+  Maintenance Requests → "New Request", and a trip's **Report an Issue**
+  row on `/trips/[id]`. Full-screen, no app shell — own header.
+- Fields: **Asset** (Truck / Trailer segmented + the asset number pill),
+  **Priority** (Low / Medium / High / Critical), **Category**, **Work
+  Order Category**, **Reason** (optional), **Description** (required),
+  **Notes** (optional), **Odometer** (optional) and **Photos** (a "+"
+  tile, mock capture).
+- **Submit Request** is enabled once a description is entered; submit is
+  a mock (`submitWorkOrder()`) → returns to the previous screen.
+- Options + submit via `lib/api/maintenance.ts` (mock
+  `lib/data/maintenance.ts`).
 
 ### Notifications `/notifications`  ✅ done
 - Opened from the top-bar notification bell. Full-screen, no app shell.

@@ -12,22 +12,36 @@ const KIND: Record<TripStopKind, { label: string; icon: string }> = {
   "drop-off": { label: "Drop Off", icon: "building" },
 };
 
-/** A labelled detail row inside the expanded stop. */
+/** A labelled detail row inside the expanded stop. With `href`, the
+ *  value renders as a link (the address opens in Google Maps). */
 function DetailRow({
   icon,
   label,
   value,
+  href,
 }: {
   icon: string;
   label: string;
   value: string;
+  href?: string;
 }) {
   return (
     <div className="flex gap-2">
       <Icon name={icon} className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
       <div className="min-w-0">
         <p className="text-xs font-semibold text-ink">{label}</p>
-        <p className="text-sm text-ink-muted">{value}</p>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-brand underline"
+          >
+            {value}
+          </a>
+        ) : (
+          <p className="text-sm text-ink-muted">{value}</p>
+        )}
       </div>
     </div>
   );
@@ -168,7 +182,22 @@ export function TripStopRow({
                 </div>
               )}
 
-              <DetailRow icon="map-pin" label="Address" value={stop.address} />
+              {stop.note && (
+                <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                  <p className="flex items-center gap-1.5 text-xs font-bold text-warning">
+                    <Icon name="info" className="h-3.5 w-3.5" />
+                    {noteLabel}
+                  </p>
+                  <p className="mt-1 text-sm text-ink">{stop.note}</p>
+                </div>
+              )}
+
+              <DetailRow
+                icon="map-pin"
+                label="Address"
+                value={stop.address}
+                href={`https://www.google.com/maps/search/?api=1&query=${stop.lat},${stop.lng}`}
+              />
               <DetailRow
                 icon="calendar"
                 label="Appointment"
@@ -192,21 +221,6 @@ export function TripStopRow({
                 <DetailRow icon="phone" label="Phone" value={stop.phone} />
               )}
               <DetailRow icon="mail" label="Email address" value={stop.email} />
-              <DetailRow
-                icon="compass"
-                label="Directions"
-                value={stop.directions}
-              />
-
-              {stop.note && (
-                <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
-                  <p className="flex items-center gap-1.5 text-xs font-bold text-warning">
-                    <Icon name="info" className="h-3.5 w-3.5" />
-                    {noteLabel}
-                  </p>
-                  <p className="mt-1 text-sm text-ink">{stop.note}</p>
-                </div>
-              )}
 
               {/* Status actions + history */}
               <div className="border-t border-ink/10 pt-3">
