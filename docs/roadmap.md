@@ -33,7 +33,7 @@ tags: [roadmap, milestones]
 - [x] Home `/home` — company & compliance cards, action cards, payroll,
       schedule, time-tracking clock in/out
 - [x] Trips `/trips` — current / upcoming / previous, itinerary card,
-      progress strip, stop timeline with Arrival + POD
+      progress strip, stop timeline with document upload + completion
 - [x] Compliance `/compliance` — documents, uploads, certifications
 - [x] Expenses `/expenses` + `/expenses/new` (5-step wizard)
 - [x] Trip Sheets `/trip-sheets` + `/trip-sheets/new`

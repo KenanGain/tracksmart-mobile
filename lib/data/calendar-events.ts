@@ -36,7 +36,7 @@ export const calendarEvents: CalendarEvent[] = [
   {
     id: "ev-0521",
     date: "2026-05-21",
-    title: "POD drop-off — Varennes depot",
+    title: "Delivery drop-off — Varennes depot",
     time: "11:30 AM",
     kind: "delivery",
   },

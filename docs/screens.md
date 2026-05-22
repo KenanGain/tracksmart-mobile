@@ -22,7 +22,7 @@ tags: [screens, routes]
 | `/home` | Home | scaffold | Today's overview, role-aware |
 | `/trips` | Trips | done | Current / Upcoming / Previous + stop timeline |
 | `/bulletin` | Bulletin | done | Load Tender feed (accept / decline) |
-| `/calendar` | Calendar | done | Month grid (events, shifts, timesheet) + list |
+| `/calendar` | Schedule | done | Month grid (events, shifts, timesheet) + agenda list |
 | `/chats` | Chats | done | Conversation list (messaging) |
 
 > **Account** is not a route — the account icon in the top bar opens a
@@ -35,9 +35,9 @@ tags: [screens, routes]
 
 | Route | Screen | Status | Purpose |
 |-------|--------|--------|---------|
-| `/trips/[id]` | Trip detail | planned | Stops, schedule, attached loads, status |
-| `/trips/[id]/route` | Route / map | planned | Map view of the trip |
-| `/trips/[id]/loads/[loadId]` | Load detail | planned | Pickup, drop-off, references, POD |
+| `/trips/[id]` | Trip detail | done | Map, progress, details, stop timeline |
+| `/trips/[id]/route` | Route / map | planned | Dedicated full-screen route map |
+| `/trips/[id]/loads/[loadId]` | Load detail | planned | Pickup, drop-off, references, documents |
 | `/trips/new` | Create trip | planned | Business creates a trip |
 | `/bulletin/[id]` | Notice detail | planned | Full announcement |
 | `/chat/[id]` | Chat thread | done | Conversation messages (no shell) |
@@ -65,7 +65,7 @@ tags: [screens, routes]
   Expenses (`/expenses/new`, `/expenses`) and Trip Sheets
   (`/trip-sheets/new`, `/trip-sheets`) are wired; Maintenance Requests
   tiles are placeholders.
-- ✅ **Payroll** & **Schedule** — summary cards with empty states.
+- ✅ **Payroll** — summary card with an empty state.
 - ✅ **Time Tracking** — CLOCK IN / CLOCK OUT toggle with a live elapsed
   timer (green) while clocked in.
 - ✅ **Refresh + Help** (side by side) + **Logout** (red outline, confirm
@@ -74,29 +74,48 @@ tags: [screens, routes]
 
 ### Trips `/trips`  ✅ done
 - Three collapsible sections: **Current Trip**, **Upcoming Trips**,
-  **Previous Trips**.
-- Current Trip: a blue itinerary card (with an "In Progress" status
-  pill), a **Trip Progress** strip (done/total stops + a bar), and a
-  stop **timeline** (Acquire / Hook / Pickup / Deliver / Check Call).
-- Each timeline stop has one of three states — **done** (green check,
-  white card), the **next** pending stop (highlighted brand ring +
-  "Next" badge), or **upcoming** (muted card). The rail connector is
-  green for completed segments, grey otherwise.
-- Each stop expands to its detail (power unit / probill, address, email,
-  directions) plus an **Arrival** block ("I'm here" / "Complete Event")
-  and a **POD Document** upload.
-- Previous trips show light-blue itinerary cards with a "Completed" pill.
-- Data via `getTrips()` (`lib/api/trips.ts`).
+  **Previous Trips** (each with a count badge).
+- Every trip is a **`TripCard`** — id + a status pill (In Progress /
+  countdown / Completed), the route (origin → destination), the
+  date/time window, a meta row (stop count, power unit, equipment +
+  trailer), a **route map** (`TripMap`) and a "View trip" footer.
+- **`TripMap`** — a real map: **Leaflet + OpenStreetMap** tiles (no API
+  key), a brand route polyline through the stop coordinates and numbered
+  red pins. Loaded client-only via `next/dynamic` (`ssr: false`). The
+  embedded map is a preview — **tapping it opens a full-screen
+  interactive map** (pan / zoom, numbered-pin popups).
+- Tapping any TripCard opens the trip detail page `/trips/[id]`.
 
-### Trip detail (`/trips/[id]`)  *(planned — map / route view)*
-- The current trip's stops are shown inline on `/trips` (above). A
-  dedicated map / route view per trip is still planned.
+### Trip detail `/trips/[id]`  ✅ done
+- Detail route (TopBar back button + "Trip &lt;id&gt;").
+- **`TripDetailView`** — the full trip: the summary card with the route
+  map, a **Trip Progress** strip (done/total + bar), a **Dispatch Note**
+  card, a **Trip Details** card (equipment, power unit, trailer, drivers,
+  dispatcher, issued-on) and the stop **timeline**.
+- Stop kinds: Acquire / Hook / Docking / Loading / Unloading / Pick Up /
+  Deliver / Drop Off / Check Call. Each timeline stop has one of three
+  states — **done** (green check), the **next** pending stop (brand ring
+  + "Next" badge) or **upcoming** (muted). The rail node shows the stop
+  number; the connector is green for completed segments.
+- Each stop expands to its detail — equipment (unit / trailer), address,
+  appointment date & time, pick-up / drop-off number, temperature,
+  phone, email, directions and a per-stop note.
+- **Pick Up**, **Deliver** and **Drop Off** stops (freight stops) get an
+  **Odometer Reading** input (truck km) and an **Upload Document** action
+  (opens the Add Document capture sheet). Every stop gets a **Mark as
+  Completed** button.
+- Data via `getTrips()` / `getTrip(id)` (`lib/api/trips.ts`, mock
+  `lib/data/trips.ts`).
+
+### Route / map (`/trips/[id]/route`)  *(planned)*
+- The trip detail already embeds an interactive route map. A dedicated
+  full-screen route / navigation view is still planned.
 
 ### Load detail `/trips/[id]/loads/[loadId]`
 - Pickup & drop-off addresses + time windows.
 - Cargo: weight, dimensions, references.
 - Accept / Decline (carrier/driver).
-- Proof-of-delivery upload when delivered.
+- Document upload on pickup / delivery.
 
 ### Bulletin `/bulletin`  ✅ done
 - A searchable feed of **Load Tender** cards from dispatch.
@@ -106,20 +125,19 @@ tags: [screens, routes]
   it shows the full load detail (from, to, date, pickup, delivery).
 - Data via `getLoadTenders()` (`lib/api/bulletin.ts`).
 
-### Calendar `/calendar`  ✅ done
+### Schedule `/calendar`  ✅ done
+- The bottom-nav tab is labelled **Schedule** (route stays `/calendar`).
 - A **Calendar / List** view toggle.
 - **Calendar** — a month grid with **prev/next month navigation**. Each
   day block shows up to three dots: working day (green), scheduled
   event(s) (blue), a clock record (amber). Today is ringed brand, the
-  selected day ringed dark.
-- Below the grid, the selected day shows its **Events**, **Shifts** and
-  **Timesheet** (clock in / clock out / hours — "In progress" while the
-  driver is still on the clock).
-- **Schedule** button → a "Schedule Event" bottom-sheet (title, date,
-  time, type). New events are added to the calendar (prototype: kept in
-  component state).
-- **List** — upcoming load tenders as event cards (date chip, route,
-  pickup / delivery times).
+  selected day ringed dark. Below the grid the selected day shows its
+  **Events**, **Shifts** and **Timesheet** (clock in / clock out /
+  hours — "In progress" while the driver is still on the clock). The
+  calendar is read-only.
+- **List** — a date-grouped **agenda** combining shifts, scheduled events
+  and load tenders. Each row has an icon chip, title, subtitle and a kind
+  tag; the date header carries a "Today" badge.
 - Data via `getUpcomingEvents()`, `getWorkingDates()`, `getShifts()`,
   `getClockRecords()` (`lib/api/schedule.ts`) and `getCalendarEvents()`
   (`lib/api/calendar.ts`).

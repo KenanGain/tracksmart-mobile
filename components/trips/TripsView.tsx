@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { TripItineraryCard } from "./TripItineraryCard";
-import { TripStopRow } from "./TripStopRow";
-import type { Trip } from "@/lib/data/trips";
+import { TripCard } from "./TripCard";
 import type { TripsData } from "@/lib/api/trips";
 
-/** Collapsible section with a blue-accented title. */
+/** Collapsible section with a blue-accented title + count badge. */
 function Section({
   title,
+  count,
   defaultOpen,
   children,
 }: {
   title: string;
+  count?: number;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
@@ -29,6 +29,11 @@ function Section({
         <h2 className="flex-1 text-left text-xl font-bold text-ink">
           {title}
         </h2>
+        {count !== undefined && count > 0 && (
+          <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs font-semibold text-ink-muted">
+            {count}
+          </span>
+        )}
         <Icon
           name={open ? "chevron-up" : "chevron-down"}
           className="h-5 w-5 text-ink-muted"
@@ -45,83 +50,41 @@ function EmptyNote({ text }: { text: string }) {
   );
 }
 
-/** The current trip — itinerary card, a progress strip and the timeline. */
-function CurrentTripBlock({ trip }: { trip: Trip }) {
-  const total = trip.stops.length;
-  const done = trip.stops.filter((stop) => stop.completed).length;
-  const nextIndex = trip.stops.findIndex((stop) => !stop.completed);
-  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
-
-  return (
-    <div className="space-y-4">
-      <TripItineraryCard trip={trip} variant="current" />
-
-      {/* Progress strip */}
-      {total > 0 && (
-        <div className="rounded-card bg-surface p-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-ink">Trip Progress</p>
-            <p className="text-sm font-semibold text-ink-muted">
-              {done} of {total} stops
-            </p>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-muted">
-            <div
-              className="h-full rounded-full bg-success transition-all"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-        </div>
-      )}
-
-      <ol>
-        {trip.stops.map((stop, index) => (
-          <TripStopRow
-            key={stop.id}
-            stop={stop}
-            isLast={index === total - 1}
-            isNext={index === nextIndex}
-          />
-        ))}
-      </ol>
-    </div>
-  );
-}
-
 /**
- * TripsView — the Trips screen: an "I'm Driving" toggle and three
- * collapsible sections (Current / Upcoming / Previous).
+ * TripsView — the Trips screen: three collapsible sections (Current /
+ * Upcoming / Previous). Every trip is a summary card; tapping one opens
+ * its detail page at `/trips/[id]`.
  */
 export function TripsView({ trips }: { trips: TripsData }) {
   return (
     <div className="space-y-5">
       <Section title="Current Trip" defaultOpen>
         {trips.current ? (
-          <CurrentTripBlock trip={trips.current} />
+          <TripCard trip={trips.current} variant="current" />
         ) : (
           <EmptyNote text="No current trip" />
         )}
       </Section>
 
-      <Section title="Upcoming Trips" defaultOpen>
+      <Section title="Upcoming Trips" count={trips.upcoming.length} defaultOpen>
         {trips.upcoming.length === 0 ? (
           <EmptyNote text="No upcoming trips" />
         ) : (
           <div className="space-y-3">
             {trips.upcoming.map((trip) => (
-              <TripItineraryCard key={trip.id} trip={trip} variant="previous" />
+              <TripCard key={trip.id} trip={trip} variant="upcoming" />
             ))}
           </div>
         )}
       </Section>
 
-      <Section title="Previous Trips" defaultOpen>
+      <Section title="Previous Trips" count={trips.previous.length}>
         {trips.previous.length === 0 ? (
           <EmptyNote text="No previous trips" />
         ) : (
           <div className="space-y-3">
             {trips.previous.map((trip) => (
-              <TripItineraryCard key={trip.id} trip={trip} variant="previous" />
+              <TripCard key={trip.id} trip={trip} variant="previous" />
             ))}
           </div>
         )}

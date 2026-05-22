@@ -35,7 +35,7 @@ phone-first for people in the field. It serves three audiences:
 | Role | Primary jobs on mobile |
 |------|------------------------|
 | **Business** | Create trips, assign loads, watch progress, see ETAs |
-| **Driver** | See assigned trips, follow the route, update trip status, upload proof of delivery, log expenses & trip sheets, clock in/out |
+| **Driver** | See assigned trips, follow the route, update trip status, upload trip documents, log expenses & trip sheets, clock in/out |
 | **Carrier** | Manage fleet/vehicles, accept load tenders, monitor assigned drivers |
 
 The current build is **driver-focused** (the first audience implemented).
@@ -73,7 +73,7 @@ App Shell (TopBar + content + BottomNav)
 ├── /home        Home        — today's overview & action cards
 ├── /trips       Trips       — current / upcoming / previous + stop timeline
 ├── /bulletin    Bulletin    — load tenders (accept / decline)
-├── /calendar    Calendar    — month grid (events / shifts / timesheet) + list
+├── /calendar    Schedule    — month grid (events / shifts / timesheet) + agenda
 └── /chats       Chats       — messaging: drivers, carriers, dispatch
 
 Detail routes inside the shell (back-button TopBar):
@@ -132,11 +132,11 @@ See [[docs/screens]] for the per-screen specs. Built so far:
   in/out card, and Refresh / Help / Logout.
 - **Trips** — current / upcoming / previous; itinerary card, a progress
   strip, and a stop timeline (Acquire / Hook / Pickup / Deliver / Check
-  Call) with Arrival + POD actions.
+  Call) — pickup/deliver stops upload documents, all stops complete.
 - **Bulletin** — a load-tender feed with accept / decline.
-- **Calendar** — a month grid (prev/next nav, working / event / clocked
-  dots), per-day events / shifts / timesheet, event scheduling, plus a
-  list view of upcoming loads.
+- **Schedule** — a month grid (prev/next nav, working / event / clocked
+  dots) with per-day events / shifts / timesheet, plus a date-grouped
+  agenda list merging shifts, events and load tenders.
 - **Chats** — conversation list + a New-Chat contact picker; full-screen
   chat threads.
 - **Compliance** — basic documents, uploads and certifications.

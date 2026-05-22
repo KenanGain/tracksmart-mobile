@@ -10,6 +10,9 @@ import {
   type Trip,
 } from "@/lib/data/trips";
 
+/** Which section a trip belongs to. */
+export type TripVariant = "current" | "upcoming" | "previous";
+
 export type TripsData = {
   current: Trip | null;
   upcoming: Trip[];
@@ -23,4 +26,20 @@ export async function getTrips(): Promise<TripsData> {
     upcoming: upcomingTrips,
     previous: previousTrips,
   };
+}
+
+/** One trip by id, with the section it belongs to — or `null`. */
+export async function getTrip(
+  id: string,
+): Promise<{ trip: Trip; variant: TripVariant } | null> {
+  if (currentTrip.id === id) {
+    return { trip: currentTrip, variant: "current" };
+  }
+  const upcoming = upcomingTrips.find((trip) => trip.id === id);
+  if (upcoming) return { trip: upcoming, variant: "upcoming" };
+
+  const previous = previousTrips.find((trip) => trip.id === id);
+  if (previous) return { trip: previous, variant: "previous" };
+
+  return null;
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTrips } from "@/lib/api/trips";
-import { TripItineraryCard } from "@/components/trips/TripItineraryCard";
+import { TripCard } from "@/components/trips/TripCard";
 
 export const metadata: Metadata = { title: "Trip History" };
 
@@ -21,7 +21,7 @@ export default async function TripHistoryPage() {
         <ul className="space-y-3">
           {previous.map((trip) => (
             <li key={trip.id}>
-              <TripItineraryCard trip={trip} variant="previous" />
+              <TripCard trip={trip} variant="previous" />
             </li>
           ))}
         </ul>

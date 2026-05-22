@@ -34,6 +34,7 @@ tags: [prompt, flutter, transition]
 | HTTP | `dio` or `http` | `fetch` in `lib/api/*` |
 | Theming | `ThemeData` + `ColorScheme` | `tailwind.config.ts` |
 | Icons | `Icons.*` (Material) | `components/ui/Icon.tsx` |
+| Maps | `google_maps_flutter` | `TripMap` (SVG prototype) |
 
 > The stack is a recommendation; if changed, change it here so all agents
 > stay aligned.
@@ -138,7 +139,7 @@ render outside it (no TopBar / BottomNav).
   | `/home` | Home | `Icons.home_outlined` |
   | `/trips` | Trips | `Icons.alt_route` |
   | `/bulletin` | Bulletin | `Icons.campaign_outlined` |
-  | `/calendar` | Calendar | `Icons.calendar_today_outlined` |
+  | `/calendar` | Schedule | `Icons.calendar_today_outlined` |
   | `/chats` | Chats | `Icons.chat_bubble_outline` |
 
   (Account is reached from the top bar, not a bottom-nav tab.)
@@ -225,9 +226,8 @@ render outside it (no TopBar / BottomNav).
     `OutlinedButton.icon`. Used for Expenses, Maintenance Requests and
     Trip Sheets. Placeholders until their form / list screens exist.
   - `LinkCard` → `link_card.dart`: title + `Icons.chevron_right` + a
-    one-line summary. Used for Payroll and Schedule; lists come from
-    `getPayrolls()` / `getShifts()` (`lib/api/home.ts`, mock
-    `lib/data/home.ts`).
+    one-line summary. Used for Payroll; the list comes from
+    `getPayrolls()` (`lib/api/home.ts`, mock `lib/data/home.ts`).
   - `TimeTrackingCard` → `time_tracking_card.dart`: a `StatefulWidget` —
     a compact, fixed-height card: title + status line on the left, a
     `Switch` on the right. While clocked in a small elapsed timer
@@ -348,26 +348,57 @@ render outside it (no TopBar / BottomNav).
 ### Trips — `/trips` → `GoRoute('/trips')`  · done
 - **Next.js:** `app/(app)/trips/page.tsx` → `TripsView`.
 - **Service:** `getTrips()` (`lib/api/trips.ts`, mock `lib/data/trips.ts`).
+- **Models (Dart):** `Trip` and `TripStop` (`lib/models/trip.dart`) with a
+  `TripStopKind` enum (acquire / hook / docking / loading / unloading /
+  pickup / deliver / drop-off / check-call) — same fields as
+  `lib/data/trips.ts` (rich: origin/destination, date window, countdown,
+  equipment, power unit, trailer, note; stops carry name, address,
+  appointment, pickup number, temperature, phone, note).
 - **Flutter widget:** `trips_screen.dart` — three collapsible sections
   (Current / Upcoming / Previous), each an `ExpansionTile`-style block
-  with a blue-accent title.
-- **`TripItineraryCard`** — trip summary card; `current` is solid
-  `brand`, `previous` is `brandLight`. The header carries a status pill
-  ("In Progress" / "Completed").
-- **Trip Progress strip** — under the current itinerary card: a `Card`
-  with "Trip Progress", an `done of total stops` count and a
-  `LinearProgressIndicator` (`success` fill).
+  with a blue-accent title and a count badge. Each section lists
+  **`TripCard`**s; there is no inline expansion.
+- **`TripCard`** — a tappable summary card (`InkWell` → `context.push`
+  `/trips/<id>`): trip id + a status pill (In Progress = `brand` /
+  countdown = `warning` / Completed = `success`), the route
+  (origin → destination), the date window, a meta row (stop count, power
+  unit, equipment + trailer), a **`TripMap`** and a "View trip" footer.
+- **`TripMap`** — a **real interactive map**. The Next.js build uses
+  **Leaflet + OpenStreetMap** tiles (`react-leaflet`, loaded client-only
+  via `next/dynamic` `ssr:false`), a `brand` route polyline through the
+  stop coordinates and numbered red `divIcon` pins. The embedded map is a
+  preview; **tapping it opens a full-screen interactive map** (pan/zoom,
+  numbered-pin popups). In Flutter use `google_maps_flutter` (or
+  `flutter_map` for OSM tiles): a `Polyline` through the `TripStop`
+  lat/lng with numbered `Marker`s, fixed height (~176) for the preview,
+  camera fit to the route bounds, and a full-screen map route on tap.
+
+### Trip detail — `/trips/[id]` → `GoRoute('/trips/:id')`  · done
+- **Opened from:** tapping any `TripCard`.
+- **Next.js:** `app/(app)/trips/[id]/page.tsx` — async Server Component
+  awaiting `getTrip(id)` (returns the trip + its variant); `notFound()`
+  when missing.
+- **Flutter widget:** `trip_detail_screen.dart`, a `ConsumerWidget`. A
+  detail route — AppBar back button + "Trip &lt;id&gt;".
+- **`TripDetailView`** — the summary card with the route map, a **Trip
+  Progress** strip (`LinearProgressIndicator`, `success`), a **Dispatch
+  Note** card (`warning`-tinted), a **Trip Details** card (equipment,
+  power unit, trailer, drivers, dispatcher, issued-on) and the stop
+  timeline.
 - **`TripStopRow`** — a timeline row with three states driven by the
   first not-yet-completed stop:
   - **done** — green check node, white card, "Done" badge.
-  - **next** — hollow brand node, `brandLight` card with a `brand` ring
-    and a "Next" badge.
-  - **upcoming** — hollow grey node, muted card.
-  The rail connector is `success` for completed segments, `backdrop`
-  otherwise. The card shows an icon chip + stacked label/location.
-  Expands to: stop detail (power unit / probill, address, email,
-  directions), an **Arrival** card ("I'm here" / "Complete Event") and a
-  **POD Document** card (take-photo + submit). All actions are mocks.
+  - **next** — brand-numbered node, `brandLight` card with a `brand`
+    ring and a "Next" badge.
+  - **upcoming** — grey-numbered node, muted card.
+  The rail node shows the stop number; the connector is `success` for
+  completed segments. Expands to the full stop detail (equipment chips,
+  address, appointment, pickup/drop-off number, temperature, phone,
+  email, directions, a `warning`-tinted per-stop note) and `StopActions`.
+- **`StopActions`** — **Pick Up / Deliver / Drop Off** (freight) stops
+  show an **Odometer Reading** card (numeric input + Save) and an
+  **Upload Document** card (opens the Add Document capture sheet); every
+  stop shows a single **Mark as Completed** button. All actions are mocks.
 - Loads are nested under a trip, not a top-level screen.
 
 ### Bulletin — `/bulletin` → `GoRoute('/bulletin')`  · done
@@ -383,7 +414,9 @@ render outside it (no TopBar / BottomNav).
   chevron; expanding shows the full load detail (from, to, date,
   pickup, delivery). Local state (mock).
 
-### Calendar — `/calendar` → `GoRoute('/calendar')`  · done
+### Schedule — `/calendar` → `GoRoute('/calendar')`  · done
+- The bottom-nav tab is labelled **Schedule**; the route path stays
+  `/calendar`.
 - **Next.js:** `app/(app)/calendar/page.tsx` → `CalendarScreen`.
 - **Service:** `getUpcomingEvents()` (`lib/api/bulletin.ts`);
   `getWorkingDates()`, `getShifts()`, `getClockRecords()`
@@ -399,17 +432,16 @@ render outside it (no TopBar / BottomNav).
     (7 columns). Each day cell shows the date and up to three dots —
     working day (`success`), scheduled event(s) (`brand`), a clock record
     (`warning`). Today is ringed `brand`, the selected day ringed `ink`.
-    A three-item legend sits under the grid.
+    A three-item legend sits under the grid. The calendar is read-only.
   - Below the grid, the selected day shows three labelled blocks —
     **Events** (coloured-accent cards per `CalendarEventKind`), **Shifts**
     (label, time range, location) and **Timesheet** (clock in / clock out
     / hours; "On the clock" + "In progress" while the record is open) —
     each with an empty-state card.
-  - A **Schedule** pill button opens a `showModalBottomSheet` form (title,
-    date, time, type) → on submit a new `CalendarEvent` is appended to the
-    widget's state (prototype: not persisted).
-  - **List** (`CalendarEventsList`): load-tender event cards with a date
-    chip.
+  - **List** (`CalendarEventsList`): a date-grouped **agenda** `ListView`
+    that merges shifts, calendar events and load tenders into one stream.
+    Each row is an icon chip + title + subtitle + kind tag; each date
+    section has a heading with a "Today" badge.
 
 ### Chats — `/chats` → `GoRoute('/chats')`  · done
 - **Next.js:** `app/(app)/chats/page.tsx` → `ChatsList`.

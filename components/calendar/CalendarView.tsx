@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { ScheduleEventSheet } from "./ScheduleEventSheet";
 import type { Shift, ClockRecord } from "@/lib/data/schedule";
 import type {
   CalendarEvent,
@@ -44,8 +43,7 @@ type Cell = { date: Date; iso: string; inMonth: boolean };
 /**
  * CalendarView — a month grid with prev/next navigation. Each day block
  * shows dots for a working day, scheduled events and a clock record.
- * Below the grid: the selected day's events, shifts and timesheet, plus a
- * "Schedule Event" action.
+ * Below the grid: the selected day's events, shifts and timesheet.
  */
 export function CalendarView({
   workingDates,
@@ -65,8 +63,6 @@ export function CalendarView({
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selected, setSelected] = useState(todayIso);
-  const [events, setEvents] = useState<CalendarEvent[]>(calendarEvents);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   const working = new Set(workingDates);
   const clockedDates = new Set(clockRecords.map((r) => r.date));
@@ -98,7 +94,7 @@ export function CalendarView({
     "en-US",
     { weekday: "short", month: "long", day: "numeric" },
   );
-  const selectedEvents = events.filter((e) => e.date === selected);
+  const selectedEvents = calendarEvents.filter((e) => e.date === selected);
   const selectedShifts = shifts.filter((s) => s.date === selected);
   const selectedClock = clockRecords.find((r) => r.date === selected) ?? null;
 
@@ -141,7 +137,7 @@ export function CalendarView({
             const isToday = cell.iso === todayIso;
             const isSelected = cell.iso === selected;
             const isWorking = working.has(cell.iso);
-            const hasEvent = events.some((e) => e.date === cell.iso);
+            const hasEvent = calendarEvents.some((e) => e.date === cell.iso);
             const hasClock = clockedDates.has(cell.iso);
             return (
               <button
@@ -194,17 +190,7 @@ export function CalendarView({
 
       {/* Selected day */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-ink">{selectedLabel}</h2>
-          <button
-            type="button"
-            onClick={() => setSheetOpen(true)}
-            className="flex shrink-0 items-center gap-1 rounded-full bg-brand px-3 py-1.5 text-xs font-semibold text-white"
-          >
-            <Icon name="plus" className="h-4 w-4" />
-            Schedule
-          </button>
-        </div>
+        <h2 className="text-base font-bold text-ink">{selectedLabel}</h2>
 
         {/* Events */}
         <div>
@@ -320,13 +306,6 @@ export function CalendarView({
           )}
         </div>
       </div>
-
-      <ScheduleEventSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        defaultDate={selected}
-        onAdd={(event) => setEvents((prev) => [...prev, event])}
-      />
     </div>
   );
 }

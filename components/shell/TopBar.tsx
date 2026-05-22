@@ -19,9 +19,15 @@ export function TopBar() {
   const router = useRouter();
   const [accountOpen, setAccountOpen] = useState(false);
 
-  const tab = NAV_ITEMS.find(
-    (item) => pathname === item.href || pathname.startsWith(`${item.href}/`),
-  );
+  // A route is a "tab route" only when it is exactly a nav href; any
+  // deeper route (e.g. /trips/12851, /account/settings) is a detail route.
+  const tab = NAV_ITEMS.find((item) => pathname === item.href);
+
+  // Detail-route title: from DETAIL_TITLES, with a dynamic case for a
+  // trip detail page (/trips/<id>).
+  const detailTitle = pathname.startsWith("/trips/")
+    ? `Trip ${pathname.split("/")[2]}`
+    : (DETAIL_TITLES[pathname] ?? APP_NAME);
 
   return (
     <>
@@ -58,7 +64,7 @@ export function TopBar() {
             <Icon name="chevron-left" className="h-5 w-5" />
           </button>
           <h1 className="flex-1 text-center text-base font-semibold text-ink">
-            {DETAIL_TITLES[pathname] ?? APP_NAME}
+            {detailTitle}
           </h1>
           <span className="h-9 w-9 shrink-0" aria-hidden="true" />
         </header>

@@ -23,7 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/home", label: "Home", icon: "home" },
   { href: "/trips", label: "Trips", icon: "route" },
   { href: "/bulletin", label: "Bulletin", icon: "megaphone" },
-  { href: "/calendar", label: "Calendar", icon: "calendar" },
+  { href: "/calendar", label: "Schedule", icon: "calendar" },
   { href: "/chats", label: "Chats", icon: "message-circle" },
 ];
 

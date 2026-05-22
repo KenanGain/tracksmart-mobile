@@ -30,6 +30,11 @@ type LoadStatus =
 
 type StopType = "pickup" | "dropoff" | "waypoint";
 
+// Implemented kinds for a TripStop (lib/data/trips.ts).
+type TripStopKind =
+  | "acquire" | "hook" | "docking" | "loading" | "unloading"
+  | "pickup" | "deliver" | "drop-off" | "check-call";
+
 type CalendarEventKind =
   | "delivery"
   | "pickup"
@@ -95,7 +100,7 @@ type CalendarEventKind =
 | `weightKg` | number | |
 | `description` | string | |
 | `tripId` | string? | Trip it belongs to |
-| `proofOfDeliveryUrl` | string? | Set on delivery |
+| `documentUrl` | string? | Uploaded on pickup / delivery |
 
 ### Compliance
 The signed-in user's documents profile (rendered by `/compliance`). A

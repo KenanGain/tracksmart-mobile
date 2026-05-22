@@ -54,7 +54,11 @@ export function CalendarScreen({
           calendarEvents={calendarEvents}
         />
       ) : (
-        <CalendarEventsList events={loads} />
+        <CalendarEventsList
+          shifts={shifts}
+          calendarEvents={calendarEvents}
+          loads={loads}
+        />
       )}
     </div>
   );

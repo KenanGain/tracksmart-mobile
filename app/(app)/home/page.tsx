@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCompany, getPayrolls, getShifts } from "@/lib/api/home";
+import { getCompany, getPayrolls } from "@/lib/api/home";
 import { getComplianceSummary } from "@/lib/api/compliance";
 import { CompanyCard } from "@/components/home/CompanyCard";
 import { ComplianceCard } from "@/components/home/ComplianceCard";
@@ -11,11 +11,10 @@ import { HomeMenu } from "@/components/home/HomeMenu";
 export const metadata: Metadata = { title: "Home" };
 
 export default async function HomePage() {
-  const [company, compliance, payrolls, shifts] = await Promise.all([
+  const [company, compliance, payrolls] = await Promise.all([
     getCompany(),
     getComplianceSummary(),
     getPayrolls(),
-    getShifts(),
   ]);
 
   return (
@@ -55,15 +54,6 @@ export default async function HomePage() {
       />
 
       <TimeTrackingCard />
-
-      <LinkCard
-        title="Schedule"
-        summary={
-          shifts.length === 0
-            ? "No upcoming shifts"
-            : `${shifts.length} upcoming shift(s)`
-        }
-      />
 
       <HomeMenu />
     </div>
