@@ -18,7 +18,7 @@ updated: 2026-05-22
 |---------|--------|-------|
 | Framework | **Next.js 15** (App Router) | Mobile-only |
 | Language | **TypeScript** (strict) | No `any` |
-| Styling | **Tailwind CSS 3** | Tokens in `tailwind.config.ts` |
+| Styling | **Tailwind CSS 3** | CSS-variable tokens supporting light & dark modes |
 | Rendering | React Server Components | `"use client"` only when needed |
 | Maps | **Leaflet + OpenStreetMap** | `react-leaflet`, no API key, `next/dynamic` |
 | Data | `lib/api` over `lib/data` mock | Typed async service layer |
@@ -62,7 +62,7 @@ c:\Users\kenan\Mobile app\
 │   └── chat/[id]/page.tsx        ← Full-screen (NO shell)
 │
 ├── components/
-│   ├── shell/          AppShell · TopBar · BottomNav
+│   ├── shell/          AppShell · TopBar · BottomNav · ThemeToggle
 │   ├── account/        AccountDrawer · SettingsScreen
 │   ├── auth/           SignInForm
 │   ├── bulletin/       BulletinList · BulletinCard
@@ -191,6 +191,40 @@ Canvas draw-to-sign. Uses `useRef` for canvas + `onPointerDown/Move/Up/Leave`. `
 
 ### `TripMapLeaflet` (`components/trips/TripMapLeaflet.tsx`)
 Loaded via `next/dynamic({ ssr: false })`. `react-leaflet` + OpenStreetMap tiles. Brand polyline + numbered red pins. Non-interactive thumbnail in `TripCard`; full interactive map in `TripDetailView`.
+
+### `ThemeToggle` (`components/shell/ThemeToggle.tsx`)
+Client component — icon button placed in the TopBar. Reads current theme from HTML class or localStorage and updates it. Animates icon state smoothly.
+
+---
+
+## Light & Dark Theme System
+
+The app implements a full, responsive light/dark theme system using Tailwind CSS v3 and CSS variables:
+
+### 1. The No-Flash Injection Script
+To prevent the client from flickering or rendering in light mode before custom settings are parsed, a small, inline blocking script is injected directly into `app/layout.tsx` inside the `<head>` tag:
+```javascript
+(function() {
+  const t = localStorage.getItem('theme');
+  const d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (t === 'dark' || (!t && d)) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+})();
+```
+
+### 2. State & Styling Integration
+- **State Store**: Theme preferences are persisted in local storage (`theme = 'light' | 'dark'`).
+- **Tailwind Tokens**: CSS variable bindings (e.g. `--bg-surface`, `--text-ink`) adapt instantly to the presence of the `.dark` class.
+- **Leaflet Dark Map Filter**:
+  ```css
+  .dark .leaflet-tile {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  }
+  ```
+  This CSS filter adapts the standard OpenStreetMap tile layers dynamically, saving bandwidth and keeping the dark aesthetics premium.
 
 ---
 

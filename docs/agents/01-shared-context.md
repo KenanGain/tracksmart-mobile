@@ -32,7 +32,7 @@ updated: 2026-05-22
 
 1. **📱 Mobile-only.** All UI inside `max-w-shell` (440 px). No desktop layout.
 2. **🚫 Don't touch shell from screens.** `AppShell` / `TopBar` / `BottomNav` own the chrome. Screens render `<main>` content **only**.
-3. **🎨 Use design tokens.** Colors from `tailwind.config.ts`. **No hex values in components.**
+3. **🎨 Use design tokens.** Colors from `tailwind.config.ts` mapping to adaptive CSS variables. **No hex values and no raw/absolute color classes (like `bg-white`, `text-black`, `bg-gray-100`) in components.** Instead, use semantic tokens (e.g., `bg-surface`, `bg-surface-muted`, `text-ink`, `text-ink-muted`, `border-border`) so that components automatically support both light and dark modes.
 4. **🚫 No `fetch` in screens.** Data via `lib/api/*` only. Never import `lib/data/*` in screens.
 5. **⚡ Server Components by default.** Add `"use client"` only for hooks, forms, state, canvas, maps.
 6. **📊 Three states per screen.** loading · empty · error — all implemented.

@@ -40,16 +40,36 @@ It serves three roles:
 <div align="center">
 <table>
 <tr>
-<td align="center"><strong>Sign In</strong></td>
-<td align="center"><strong>Home</strong></td>
-<td align="center"><strong>Trips</strong></td>
-<td align="center"><strong>Trip Detail</strong></td>
+<th colspan="2" align="center">Sign In</th>
+<th colspan="2" align="center">Home</th>
 </tr>
 <tr>
-<td><img src="screenshots/01-sign-in.png" width="200" alt="Sign In screen"/></td>
-<td><img src="screenshots/03-home.png" width="200" alt="Home screen"/></td>
-<td><img src="screenshots/04-trips.png" width="200" alt="Trips screen with maps"/></td>
-<td><img src="screenshots/08-trip-detail.png" width="200" alt="Trip detail with stop timeline"/></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+</tr>
+<tr>
+<td><img src="screenshots/light/01-sign-in.png" width="180" alt="Sign In Light"/></td>
+<td><img src="screenshots/dark/01-sign-in.png" width="180" alt="Sign In Dark"/></td>
+<td><img src="screenshots/light/03-home.png" width="180" alt="Home Light"/></td>
+<td><img src="screenshots/dark/03-home.png" width="180" alt="Home Dark"/></td>
+</tr>
+<tr>
+<th colspan="2" align="center">Trips</th>
+<th colspan="2" align="center">Trip Detail</th>
+</tr>
+<tr>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+</tr>
+<tr>
+<td><img src="screenshots/light/04-trips.png" width="180" alt="Trips Light"/></td>
+<td><img src="screenshots/dark/04-trips.png" width="180" alt="Trips Dark"/></td>
+<td><img src="screenshots/light/08-trip-detail.png" width="180" alt="Trip Detail Light"/></td>
+<td><img src="screenshots/dark/08-trip-detail.png" width="180" alt="Trip Detail Dark"/></td>
 </tr>
 </table>
 </div>
@@ -59,16 +79,36 @@ It serves three roles:
 <div align="center">
 <table>
 <tr>
-<td align="center"><strong>Bulletin</strong></td>
-<td align="center"><strong>Schedule</strong></td>
-<td align="center"><strong>Chats</strong></td>
-<td align="center"><strong>Notifications</strong></td>
+<th colspan="2" align="center">Bulletin</th>
+<th colspan="2" align="center">Schedule</th>
 </tr>
 <tr>
-<td><img src="screenshots/05-bulletin.png" width="200" alt="Bulletin — load tender feed"/></td>
-<td><img src="screenshots/06-schedule.png" width="200" alt="Schedule — month calendar"/></td>
-<td><img src="screenshots/07-chats.png" width="200" alt="Chats — conversation list"/></td>
-<td><img src="screenshots/09-notifications.png" width="200" alt="Notifications feed"/></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+</tr>
+<tr>
+<td><img src="screenshots/light/05-bulletin.png" width="180" alt="Bulletin Light"/></td>
+<td><img src="screenshots/dark/05-bulletin.png" width="180" alt="Bulletin Dark"/></td>
+<td><img src="screenshots/light/06-schedule.png" width="180" alt="Schedule Light"/></td>
+<td><img src="screenshots/dark/06-schedule.png" width="180" alt="Schedule Dark"/></td>
+</tr>
+<tr>
+<th colspan="2" align="center">Chats</th>
+<th colspan="2" align="center">Notifications</th>
+</tr>
+<tr>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+</tr>
+<tr>
+<td><img src="screenshots/light/07-chats.png" width="180" alt="Chats Light"/></td>
+<td><img src="screenshots/dark/07-chats.png" width="180" alt="Chats Dark"/></td>
+<td><img src="screenshots/light/09-notifications.png" width="180" alt="Notifications Light"/></td>
+<td><img src="screenshots/dark/09-notifications.png" width="180" alt="Notifications Dark"/></td>
 </tr>
 </table>
 </div>
@@ -78,16 +118,36 @@ It serves three roles:
 <div align="center">
 <table>
 <tr>
-<td align="center"><strong>Expenses</strong></td>
-<td align="center"><strong>Submit Expense</strong></td>
-<td align="center"><strong>Compliance</strong></td>
-<td align="center"><strong>Settings</strong></td>
+<th colspan="2" align="center">Expenses</th>
+<th colspan="2" align="center">Submit Expense</th>
 </tr>
 <tr>
-<td><img src="screenshots/10-expenses.png" width="200" alt="Expense status list"/></td>
-<td><img src="screenshots/11-expense-new.png" width="200" alt="Submit expense wizard"/></td>
-<td><img src="screenshots/14-compliance.png" width="200" alt="Compliance documents"/></td>
-<td><img src="screenshots/15-settings.png" width="200" alt="App settings"/></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+</tr>
+<tr>
+<td><img src="screenshots/light/10-expenses.png" width="180" alt="Expenses Light"/></td>
+<td><img src="screenshots/dark/10-expenses.png" width="180" alt="Expenses Dark"/></td>
+<td><img src="screenshots/light/11-expense-new.png" width="180" alt="Submit Expense Light"/></td>
+<td><img src="screenshots/dark/11-expense-new.png" width="180" alt="Submit Expense Dark"/></td>
+</tr>
+<tr>
+<th colspan="2" align="center">Compliance</th>
+<th colspan="2" align="center">Settings</th>
+</tr>
+<tr>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+<td align="center"><strong>Light</strong></td>
+<td align="center"><strong>Dark</strong></td>
+</tr>
+<tr>
+<td><img src="screenshots/light/14-compliance.png" width="180" alt="Compliance Light"/></td>
+<td><img src="screenshots/dark/14-compliance.png" width="180" alt="Compliance Dark"/></td>
+<td><img src="screenshots/light/15-settings.png" width="180" alt="Settings Light"/></td>
+<td><img src="screenshots/dark/15-settings.png" width="180" alt="Settings Dark"/></td>
 </tr>
 </table>
 </div>

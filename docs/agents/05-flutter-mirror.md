@@ -76,18 +76,21 @@ GoRouter(
 
 ---
 
-### Theme (`ThemeData`) — mirrors Tailwind tokens
+### Theme (`ThemeData`) — mirrors Tailwind tokens (Light & Dark)
 
 ```dart
-ThemeData(
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: const Color(0xFF1D4ED8),   // brand
-    primary:    const Color(0xFF1D4ED8),  // brand
-    surface:    Colors.white,             // surface
-    surfaceVariant: const Color(0xFFF8FAFC), // surface-muted
-    error:      const Color(0xFFDC2626),  // danger
-    onPrimary:  Colors.white,
-    onSurface:  const Color(0xFF0F172A),  // ink
+// Light Theme
+final lightTheme = ThemeData(
+  brightness: Brightness.light,
+  colorScheme: const ColorScheme.light(
+    primary: Color(0xFF1D4ED8),          // brand (blue-700)
+    surface: Color(0xFFFFFFFF),          // bg-surface (white)
+    surfaceContainer: Color(0xFFF8FAFC), // bg-surface-muted (slate-50)
+    error: Color(0xFFDC2626),            // danger (red-600)
+    onPrimary: Color(0xFFFFFFFF),
+    onSurface: Color(0xFF0F172A),        // text-ink (slate-900)
+    onSurfaceVariant: Color(0xFF64748B),  // text-ink-muted (slate-500)
+    outline: Color(0xFFE2E8F0),          // border-border (slate-200)
   ),
   cardTheme: CardTheme(
     elevation: 1,
@@ -100,7 +103,33 @@ ThemeData(
     fillColor: Colors.white,
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
   ),
-)
+);
+
+// Dark Theme
+final darkTheme = ThemeData(
+  brightness: Brightness.dark,
+  colorScheme: const ColorScheme.dark(
+    primary: Color(0xFF3B82F6),          // brand (blue-500)
+    surface: Color(0xFF0F172A),          // bg-surface (slate-900)
+    surfaceContainer: Color(0xFF1E293B), // bg-surface-muted (slate-800)
+    error: Color(0xFFEF4444),            // danger (red-500)
+    onPrimary: Color(0xFFFFFFFF),
+    onSurface: Color(0xFFF8FAFC),        // text-ink (slate-50)
+    onSurfaceVariant: Color(0xFF94A3B8),  // text-ink-muted (slate-400)
+    outline: Color(0xFF334155),          // border-border (slate-700)
+  ),
+  cardTheme: CardTheme(
+    elevation: 1,
+    color: const Color(0xFF1E293B),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12)), // rounded-card
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: const Color(0xFF1E293B),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+  ),
+);
 ```
 
 ---

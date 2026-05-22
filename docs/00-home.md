@@ -64,10 +64,11 @@ tags: [moc, tracksmart, mobile, nextjs, flutter]
 
 ---
 
-## ✅ What's Built (M0–M5 Complete)
+## ✅ What's Built (M0–M5 Complete + Light/Dark Theme)
 
 | Feature | Highlights |
 |---------|-----------|
+| **Light & Dark Themes** | App-wide adaptive styling using CSS variables + Theme Toggle |
 | **Mobile shell** | AppShell · TopBar · BottomNav (translucent floating, blurred) |
 | **Auth** | Sign in with demo user picker or manual credentials |
 | **Home** | Company card · compliance · expenses · trip sheets · time-tracking clock |
@@ -84,6 +85,7 @@ tags: [moc, tracksmart, mobile, nextjs, flutter]
 | **Account** | Drawer · Settings · Trip History · About |
 
 ### New in Latest Commit
+- **Light/Dark Theme** — ThemeToggle in the Shell with persistent localStorage state and adaptive Leaflet map tiles.
 - **`PillTabs`** — shared rounded-bubble tab switcher (used by Trips + Expense Status)
 - **`TripsView`** refactored to PillTab navigation
 - **`ExpenseStatusList`** — Payroll Addition / Company Paid tab split + search
@@ -97,7 +99,7 @@ tags: [moc, tracksmart, mobile, nextjs, flutter]
 |-----------|------|
 | M6 | Load Detail · full-screen route map · maintenance requests |
 | M7 | Business + carrier role-aware UI |
-| M8 | Real API · offline cache · dark mode |
+| M8 | Real API · offline cache |
 | Stage 2 | Flutter native app (spec in [[agents/05-flutter-mirror]]) |
 
 ---

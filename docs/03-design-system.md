@@ -14,44 +14,33 @@ updated: 2026-05-22
 
 ## Colour Tokens
 
-All colours live in `tailwind.config.ts` under `theme.extend.colors`.
+All colours live in `tailwind.config.ts` under `theme.extend.colors`. They consume CSS variables (RGB channels) defined in `app/globals.css` (`:root` for light mode, `.dark` for dark mode) via `rgb(var(--token) / <alpha-value>)`. Opacity utilities (such as `bg-brand/10` or `border-ink/15`) continue to work seamlessly.
 
-### Brand
+### Light vs Dark Mappings
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `brand` | `#1d4ed8` | Primary buttons, active nav, accents |
-| `brand-light` | `#eff6ff` | Brand tint chips, trip-id badges |
-| `brand/30` | opacity 30% | Focus ring: `focus:ring-brand/30` |
+| Token | Tailwind Name | Light Mode Value | Dark Mode Value | Usage |
+|-------|---------------|------------------|-----------------|-------|
+| `brand` | `brand` | `29 78 216` (`#1d4ed8`) | `59 130 246` (`#3b82f6`) | Primary buttons, active nav indicators, accent icons |
+| `brand-dark` | `brand-dark` | `30 58 138` (`#1e3a8a`) | `37 99 235` (`#2563eb`) | High-contrast brand headers/borders |
+| `brand-light` | `brand-light` | `219 234 254` (`#dbeafe`) | `30 41 84` (`#1e2954`) | Tinted alert chips, trip-id badges, light brand backgrounds |
+| `success` | `success` | `21 128 61` (`#15803d`) | `34 197 94` (`#22c55e`) | Completed states, clocked-in timer, success indicators |
+| `warning` | `warning` | `180 83 9` (`#b45309`) | `245 158 11` (`#f59e0b`) | Upcoming / warning states, load tenders |
+| `danger` | `danger` | `185 28 28` (`#b91c1c`) | `248 113 113` (`#f87171`) | Errors, destructive actions, logout buttons |
+| `surface` | `surface` | `255 255 255` (`#ffffff`) | `24 24 27` (`#18181b`) | Card backgrounds, inputs, TopBar & BottomNav floating bars |
+| `surface-muted`| `surface-muted`| `244 245 247` (`#f4f5f7`) | `9 9 11` (`#09090b`) | Main screen backgrounds, PillTab track backgrounds |
+| `backdrop` | `backdrop` | `203 213 225` (`#cbd5e1`) | `63 63 70` (`#3f3f46`) | Desktop preview canvas surrounding the mobile shell |
+| `ink` | `ink` | `15 23 42` (`#0f172a`) | `250 250 250` (`#fafafa`) | Primary text, active icons |
+| `ink-muted` | `ink-muted` | `100 116 139` (`#64748b`)| `161 161 170` (`#a1a1aa`)| Secondary text, placeholder text, inactive nav icons |
 
-### Ink (Text)
+### Border Tokens (Opacity Aliases)
 
-| Token | Usage |
-|-------|-------|
-| `ink` | Primary text (`#0f172a`) |
-| `ink-muted` | Secondary / placeholder text |
-| `ink/5` | Hairline borders (`border-ink/5`) |
-| `ink/10` | Subtle borders |
-| `ink/15` | Card borders |
+Borders should always use opacity variants of `ink` to look balanced in both themes:
+- `border-ink/5` for hairline separators
+- `border-ink/10` for card outlines and subtle dividers
+- `border-ink/15` for input borders and card dividers
 
-### Surfaces
-
-| Token | Usage |
-|-------|-------|
-| `surface` | Card / input backgrounds (white) |
-| `surface-muted` | Page background, pill-tab track |
-
-### Semantic
-
-| Token | Usage |
-|-------|-------|
-| `success` | Completed states, clocked-in, green check |
-| `success/10` | Done-button tint background |
-| `danger` | Errors, destructive actions, logout |
-| `warning` | Upcoming / expiry warnings |
-
-> [!caution] No hex values in components
-> Use `text-brand`, `bg-brand`, `border-brand`, `text-ink`, `bg-surface-muted`, etc.
+> [!caution] No hardcoded hex/RGB values in components
+> Use classes like `text-brand`, `bg-brand-light`, `text-ink-muted`, `bg-surface`, `bg-surface-muted`, etc. These will automatically toggle styling when dark mode is active.
 
 ---
 
@@ -132,6 +121,13 @@ Five tabs from `NAV_ITEMS` (`lib/constants.ts`):
 | Bulletin | megaphone | `/bulletin` |
 | Schedule | calendar | `/calendar` |
 | Chats | chat-bubble | `/chats` |
+
+### ThemeToggle (`components/shell/ThemeToggle.tsx`)
+
+A sun/moon icon button rendered in the header or TopBar (specifically inside the `TopBar` for the tabs, and in the `SignInForm`). 
+- **Behavior:** Toggles the `.dark` class on the `<html>` element.
+- **Persistence:** Choices are saved in local storage under the `theme` key (`'light'` or `'dark'`).
+- **No-Flash:** Reacts instantly on the client, synced with a blocking inline script in `RootLayout` (`app/layout.tsx`) that reads from local storage prior to first paint.
 
 ---
 

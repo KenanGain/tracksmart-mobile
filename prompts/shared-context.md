@@ -31,7 +31,7 @@ existing web application and is designed to talk to the same backend API.
 2. **Don't touch the chrome from screens.** `AppShell` / `TopBar` /
    `BottomNav` own the frame. Screens render `<main>` content only.
 3. **Use design tokens.** Colours, spacing, radii come from
-   `tailwind.config.ts` — see [[design-system]]. Never hard-code a hex value.
+   `tailwind.config.ts` mapping to adaptive CSS variables. **Never hard-code a hex value or use raw/absolute color classes (like `bg-white`, `text-black`, `bg-gray-100`) in components.** Instead, use semantic tokens (e.g., `bg-surface`, `bg-surface-muted`, `text-ink`, `text-ink-muted`, `border-border`) so that components automatically support both light and dark modes (see [[design-system]]).
 4. **No direct `fetch` in screens.** Data goes through `lib/api/*` (the
    service layer) over `lib/data/*` (the mock backend) — typed against
    [[data-model]]. Screens never import from `lib/data` directly.
